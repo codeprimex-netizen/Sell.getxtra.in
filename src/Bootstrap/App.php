@@ -111,6 +111,19 @@ use App\Http\Middleware\ApiScope;
 use App\Http\Middleware\AuthenticateApiKey;
 use App\Infrastructure\Persistence\PdoApiKeyRepository;
 use App\Infrastructure\Persistence\PdoWebhookSubscriptionRepository;
+use App\Application\Observability\AlertService;
+use App\Http\Middleware\CollectMetrics;
+use App\Http\Middleware\TraceRequest;
+use App\Infrastructure\Observability\Health\CacheHealthCheck;
+use App\Infrastructure\Observability\Health\DatabaseHealthCheck;
+use App\Infrastructure\Observability\Health\HealthChecker;
+use App\Infrastructure\Observability\Health\QueueHealthCheck;
+use App\Infrastructure\Observability\Health\SearchHealthCheck;
+use App\Infrastructure\Observability\Metrics\MetricsRegistry;
+use App\Infrastructure\Observability\Tracing\LogSpanExporter;
+use App\Infrastructure\Observability\Tracing\NullSpanExporter;
+use App\Infrastructure\Observability\Tracing\SpanExporter;
+use App\Infrastructure\Observability\Tracing\Tracer;
 
 /**
  * Application bootstrapper.
@@ -136,6 +149,7 @@ final class App
 
         $this->container = Container::getInstance();
         $this->registerCoreServices();
+        $this->registerObservabilityServices();
         $this->registerIdentityServices();
         $this->registerCatalogServices();
         $this->registerCommerceServices();
@@ -160,7 +174,14 @@ final class App
             if (!str_starts_with($path, '/')) {
                 $path = $basePath . '/' . $path;
             }
-            return new Logger($path, (string) Config::get('log.level', 'info'));
+            return new Logger(
+                $path,
+                (string) Config::get('log.level', 'info'),
+                null,
+                (string) Config::get('app.name', 'sell.getxtra.in'),
+                (string) Config::get('app.env', 'production'),
+                (bool) Config::get('log.stream', false),
+            );
         });
 
         $c->singleton(ConnectionManager::class, static fn (): ConnectionManager => new ConnectionManager());
@@ -357,6 +378,57 @@ final class App
     }
 
     /**
+     * Bind the observability stack (Phase 12): metrics registry, tracer +
+     * span exporter, alerting, and the readiness health checks. HTTP metrics/
+     * trace middleware and the queue worker autowire the registry/tracer.
+     */
+    private function registerObservabilityServices(): void
+    {
+        $c = $this->container;
+        $basePath = $this->basePath;
+
+        $c->singleton(MetricsRegistry::class, static function () use ($basePath): MetricsRegistry {
+            $path = (string) Config::get('metrics.path', 'storage/metrics/metrics.json');
+            if (!str_starts_with($path, '/')) {
+                $path = $basePath . '/' . $path;
+            }
+            $registry = new MetricsRegistry($path);
+            $registry->describe('http_requests_total', 'counter', 'Total HTTP requests by method and status.');
+            $registry->describe('http_requests_errors_total', 'counter', 'HTTP 5xx responses by method.');
+            $registry->describe('http_request_duration_seconds', 'histogram', 'HTTP request latency in seconds.');
+            $registry->describe('jobs_processed_total', 'counter', 'Queue jobs processed successfully.');
+            $registry->describe('jobs_dead_lettered_total', 'counter', 'Queue jobs dead-lettered after retries.');
+            $registry->describe('job_duration_seconds', 'histogram', 'Queue job processing time in seconds.');
+            $registry->describe('alerts_fired_total', 'counter', 'Operational alerts fired by the application.');
+            $registry->describe('queue_depth', 'gauge', 'Current depth of the default job queue.');
+            return $registry;
+        });
+
+        $c->singleton(SpanExporter::class, static function (Container $c): SpanExporter {
+            return (bool) Config::get('observability.tracing_enabled', false)
+                ? new LogSpanExporter($c->get(Logger::class))
+                : new NullSpanExporter();
+        });
+
+        $c->singleton(Tracer::class, static fn (Container $c) => new Tracer(
+            $c->get(SpanExporter::class),
+            (bool) Config::get('observability.tracing_enabled', false),
+        ));
+
+        $c->singleton(AlertService::class, static fn (Container $c) =>
+            new AlertService($c->get(Logger::class), $c->get(MetricsRegistry::class)));
+
+        $c->singleton(HealthChecker::class, static function (Container $c) use ($basePath): HealthChecker {
+            $checker = new HealthChecker();
+            $checker->register(new DatabaseHealthCheck($c->get(ConnectionManager::class)), true);
+            $checker->register(new CacheHealthCheck($basePath . '/storage/cache/ratelimit'), true);
+            $checker->register(new QueueHealthCheck($c->get(QueueDriver::class)), true);
+            $checker->register(new SearchHealthCheck($c->get(SearchIndex::class)), false);
+            return $checker;
+        });
+    }
+
+    /**
      * Bind GDPR/DPDP repositories (Phase 11). Consent and data-privacy
      * application services autowire from these.
      */
@@ -420,12 +492,17 @@ final class App
         });
 
         $c->singleton(Dispatcher::class,
-            static fn (Container $c) => new Dispatcher($c->get(QueueDriver::class)));
+            static fn (Container $c) => new Dispatcher($c->get(QueueDriver::class), $c->get(Tracer::class)));
 
         $c->singleton(Worker::class, static fn (Container $c) => new Worker(
             $c->get(QueueDriver::class),
             $c->get(JobRegistry::class),
             $c->get(Logger::class),
+            3,
+            10,
+            $c->get(Tracer::class),
+            $c->get(MetricsRegistry::class),
+            $c->get(AlertService::class),
         ));
 
         // Scheduler (Req 18.3): recurring maintenance tasks. An external cron
@@ -495,6 +572,8 @@ final class App
                 logger: $c->get(Logger::class),
                 globalMiddleware: [
                     RequestId::class,
+                    TraceRequest::class,
+                    CollectMetrics::class,
                     SecurityHeaders::class,
                     \App\Http\Middleware\ThrottleGlobal::class,
                     StartSession::class,

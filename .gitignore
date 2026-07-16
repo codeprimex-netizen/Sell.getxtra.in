@@ -11,6 +11,8 @@ node_modules/
 /storage/logs/*.log
 /storage/cache/*
 /storage/tmp/*
+/storage/metrics/*
+/storage/uploads/*
 !/storage/**/.gitkeep
 
 # Build artifacts

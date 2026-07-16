@@ -1,0 +1,60 @@
+# Prometheus alerting rules for Sell.getxtra.in (Req 15.6).
+# Routed to on-call via Alertmanager. Thresholds are starting points; tune per
+# observed baselines. Event-driven alerts (payment failure, dead-letter) are
+# also emitted directly by the application via AlertService.
+
+groups:
+  - name: sell-getxtra-availability
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_errors_total[5m]))
+            / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP 5xx error rate above 5% (RED: Errors)"
+          runbook: "deploy/observability/RUNBOOK.md#high-error-rate"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 request latency above 1s (RED: Duration)"
+          runbook: "deploy/observability/RUNBOOK.md#high-latency"
+
+  - name: sell-getxtra-workers
+    rules:
+      - alert: QueueBacklogGrowing
+        expr: queue_depth > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Queue backlog above 1000 messages"
+          runbook: "deploy/observability/RUNBOOK.md#queue-backlog"
+
+      - alert: JobsDeadLettering
+        expr: increase(jobs_dead_lettered_total[15m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Jobs are being dead-lettered"
+          runbook: "deploy/observability/RUNBOOK.md#dead-letter"
+
+  - name: sell-getxtra-payments
+    rules:
+      - alert: PaymentFailuresSpike
+        expr: increase(alerts_fired_total{alert="payment_failure"}[10m]) > 3
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Multiple payment failures in the last 10 minutes"
+          runbook: "deploy/observability/RUNBOOK.md#payment-failures"

@@ -6,16 +6,16 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Request;
 use App\Http\Response;
-use App\Infrastructure\Persistence\ConnectionManager;
-use Throwable;
+use App\Infrastructure\Observability\Health\HealthChecker;
 
 /**
- * Liveness and readiness probes for orchestration and load balancers.
- * See Req 15.4.
+ * Liveness and readiness probes for orchestration and load balancers
+ * (Req 15.4). Liveness is cheap (process up); readiness aggregates the
+ * dependency probes (DB, cache, queue, search).
  */
 final class HealthController
 {
-    public function __construct(private ConnectionManager $connection)
+    public function __construct(private HealthChecker $checker)
     {
     }
 
@@ -28,22 +28,11 @@ final class HealthController
     /** Readiness: dependencies reachable. */
     public function ready(Request $request): Response
     {
-        $checks = ['database' => $this->checkDatabase()];
-        $healthy = !in_array(false, $checks, true);
+        $result = $this->checker->run();
 
         return Response::json([
-            'status' => $healthy ? 'ready' : 'degraded',
-            'checks' => $checks,
-        ], $healthy ? 200 : 503);
-    }
-
-    private function checkDatabase(): bool
-    {
-        try {
-            $this->connection->read()->query('SELECT 1');
-            return true;
-        } catch (Throwable) {
-            return false;
-        }
+            'status' => $result['status'],
+            'checks' => $result['checks'],
+        ], $result['ready'] ? 200 : 503);
     }
 }

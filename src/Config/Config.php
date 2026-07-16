@@ -72,6 +72,15 @@ final class Config
                 'channel' => Env::get('LOG_CHANNEL', 'json'),
                 'level'   => Env::get('LOG_LEVEL', 'info'),
                 'path'    => Env::get('LOG_PATH', 'storage/logs/app.log'),
+                'stream'  => (bool) Env::get('LOG_STREAM', false),
+            ],
+            'metrics' => [
+                'token' => Env::get('METRICS_TOKEN', ''),
+                'path'  => Env::get('METRICS_PATH', 'storage/metrics/metrics.json'),
+            ],
+            'observability' => [
+                'tracing_enabled' => (bool) Env::get('TRACING_ENABLED', false),
+                'queue_backlog_threshold' => (int) Env::get('QUEUE_BACKLOG_THRESHOLD', 1000),
             ],
             'security' => [
                 'rate_limit_enabled' => (bool) Env::get('RATE_LIMIT_ENABLED', true),

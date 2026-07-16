@@ -22,6 +22,7 @@ final class RequestId implements MiddlewareInterface
     public function handle(Request $request, Closure $next, string ...$args): Response
     {
         $id = $request->header('X-Request-Id') ?: $this->logger->requestId();
+        $this->logger->setRequestId($id);
         $request = $request->withAttribute('request_id', $id);
 
         /** @var Response $response */

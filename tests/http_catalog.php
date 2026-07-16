@@ -108,6 +108,18 @@ $home = $kernel->handle($make('GET', '/'));
 $csp = $home->headers()['Content-Security-Policy'] ?? '';
 $check('home response sets a nonce-based CSP', str_contains($csp, "script-src 'self' 'nonce-") && str_contains($csp, "object-src 'none'"));
 $check('home response sets HSTS', str_contains($home->headers()['Strict-Transport-Security'] ?? '', 'max-age='));
+$check('home response echoes a request id', ($home->headers()['X-Request-Id'] ?? '') !== '');
+$check('home response echoes a traceparent', str_starts_with($home->headers()['traceparent'] ?? '', '00-'));
+
+// Phase 12: observability endpoints.
+$live = $kernel->handle($make('GET', '/healthz'));
+$check('GET /healthz is 200 (liveness)', $live->status() === 200 && str_contains($live->body(), '"status":"ok"'));
+$ready = $kernel->handle($make('GET', '/readyz'));
+$check('GET /readyz reports dependency checks', str_contains($ready->body(), 'database') && in_array($ready->status(), [200, 503], true));
+$metricsRes = $kernel->handle($make('GET', '/metrics'));
+$check('GET /metrics returns Prometheus text', $metricsRes->status() === 200
+    && str_contains($metricsRes->headers()['Content-Type'] ?? '', 'text/plain')
+    && str_contains($metricsRes->body(), 'queue_depth'));
 
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";

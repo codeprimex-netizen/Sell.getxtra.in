@@ -33,6 +33,7 @@ use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\MetricsController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\PaymentWebhookController;
 use App\Http\Controllers\Web\ReviewController;
@@ -63,6 +64,9 @@ return static function (Router $router): void {
     // ── Health / readiness probes (Req 15.4) ──────────────────────
     $router->get('/healthz', [HealthController::class, 'live']);
     $router->get('/readyz', [HealthController::class, 'ready']);
+
+    // ── Prometheus metrics scrape (Req 15.2) ──────────────────────
+    $router->get('/metrics', [MetricsController::class, 'index']);
 
     // ── Guest-only auth (Req 2) ───────────────────────────────────
     $router->get('/register', [RegisterController::class, 'show'], ['guest']);

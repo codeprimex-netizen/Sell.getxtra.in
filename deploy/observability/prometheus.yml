@@ -1,0 +1,34 @@
+# Prometheus scrape + alerting configuration for Sell.getxtra.in (Req 15.2/15.6).
+# Scrapes the app's /metrics endpoint and loads the alert rules in alerts.yml.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    service: sell.getxtra.in
+
+rule_files:
+  - alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'sell-getxtra-web'
+    metrics_path: /metrics
+    # If METRICS_TOKEN is set, provide it as a bearer token:
+    # authorization:
+    #   credentials_file: /etc/prometheus/metrics_token
+    static_configs:
+      - targets: ['web:8080']
+        labels:
+          component: web
+
+  - job_name: 'sell-getxtra-worker'
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['worker:8080']
+        labels:
+          component: worker

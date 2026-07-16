@@ -31,9 +31,20 @@ final class Logger
         private string $path = 'storage/logs/app.log',
         string $minLevel = 'debug',
         ?string $requestId = null,
+        private string $service = 'sell.getxtra.in',
+        private string $env = 'production',
+        private bool $stream = false,
     ) {
         $this->threshold = self::LEVELS[$minLevel] ?? 100;
         $this->requestId = $requestId ?? self::generateRequestId();
+    }
+
+    /** Align the logger's correlation id with the inbound request id. */
+    public function setRequestId(string $requestId): void
+    {
+        if ($requestId !== '') {
+            $this->requestId = $requestId;
+        }
     }
 
     public static function generateRequestId(): string
@@ -92,11 +103,19 @@ final class Logger
             'timestamp'  => date('c'),
             'level'      => $level,
             'message'    => $message,
+            'service'    => $this->service,
+            'env'        => $this->env,
             'request_id' => $this->requestId,
             'context'    => $context,
         ];
 
         $line = json_encode($record, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+
+        // Container log shipping (ELK/Loki) prefers stdout; file is the fallback.
+        if ($this->stream) {
+            @file_put_contents('php://stderr', $line . PHP_EOL);
+            return;
+        }
 
         $dir = dirname($this->path);
         if ($dir !== '' && !is_dir($dir)) {

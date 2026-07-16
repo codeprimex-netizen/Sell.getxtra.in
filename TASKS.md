@@ -117,11 +117,11 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 11.9 Dependency + SAST scanning in CI (DAST scaffolded) _(Req 14.9, 23.1)_ **[M]**
 
 ## Phase 12 — Observability & Reliability
-- [ ] 12.1 Ship logs to central store (ELK/Loki) with request IDs _(Req 15.1)_ **[M]**
-- [ ] 12.2 Metrics (RED + KPIs) → Prometheus/Grafana dashboards _(Req 15.2)_ **[M]**
-- [ ] 12.3 Distributed tracing (OpenTelemetry) web→queue→jobs _(Req 15.3)_ **[S]**
-- [ ] 12.4 `/healthz` + `/readyz` (DB/cache/queue/search) _(Req 15.4)_ **[M]**
-- [ ] 12.5 Alerting (error rate, P95 latency, queue backlog, payment failures, DLQ) + on-call _(Req 15.6)_ **[M]**
+- [x] 12.1 Ship logs to central store (ELK/Loki) with request IDs _(Req 15.1)_ **[M]**
+- [x] 12.2 Metrics (RED + KPIs) → Prometheus/Grafana dashboards _(Req 15.2)_ **[M]**
+- [x] 12.3 Distributed tracing (OpenTelemetry) web→queue→jobs _(Req 15.3)_ **[S]**
+- [x] 12.4 `/healthz` + `/readyz` (DB/cache/queue/search) _(Req 15.4)_ **[M]**
+- [x] 12.5 Alerting (error rate, P95 latency, queue backlog, payment failures, DLQ) + on-call _(Req 15.6)_ **[M]**
 
 ## Phase 13 — Performance, Scale & HA
 - [ ] 13.1 Redis caching (object/fragment/page) + **tag-based invalidation** _(Req 16.1)_ **[M]**
