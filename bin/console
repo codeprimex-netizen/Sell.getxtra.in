@@ -1,0 +1,96 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * CLI entry point for maintenance commands.
+ *
+ * Usage:
+ *   php bin/console migrate      Apply pending migrations
+ *   php bin/console rollback     Roll back the last migration batch
+ *   php bin/console seed         Seed baseline data (roles/permissions/categories)
+ */
+
+use App\Bootstrap\App;
+use App\Console\MigrationRunner;
+use App\Console\Seeder;
+use App\Infrastructure\Persistence\ConnectionManager;
+use App\Infrastructure\Queue\Worker;
+use App\Infrastructure\Scheduler\Scheduler;
+
+$basePath = dirname(__DIR__);
+
+require $basePath . '/vendor/autoload.php';
+
+$app = (new App($basePath))->boot();
+$container = $app->container();
+
+$command = $argv[1] ?? 'help';
+
+/** @var ConnectionManager $connection */
+$connection = $container->get(ConnectionManager::class);
+
+try {
+    switch ($command) {
+        case 'migrate':
+            (new MigrationRunner($connection, $basePath . '/database/migrations'))->migrate();
+            break;
+
+        case 'rollback':
+            (new MigrationRunner($connection, $basePath . '/database/migrations'))->rollback();
+            break;
+
+        case 'seed':
+            (new Seeder($connection))->run();
+            break;
+
+        case 'clear-balances':
+            $job = new App\Jobs\ClearSellerBalance(
+                $container->get(App\Domain\Commerce\OrderRepositoryInterface::class),
+                $container->get(App\Application\Commerce\LedgerService::class),
+                (int) App\Config\Config::get('commerce.refund_window_days', 14),
+            );
+            $count = $job->run();
+            fwrite(STDOUT, "Cleared {$count} order(s) from pending to cleared.\n");
+            break;
+
+        case 'queue:work':
+            /** @var Worker $worker */
+            $worker = $container->get(Worker::class);
+            $queue = $argv[2] ?? 'default';
+            // Bounded drain so an external supervisor/cron can loop safely.
+            $processed = $worker->work($queue, 0, 55);
+            fwrite(STDOUT, "Processed {$processed} job(s) on queue [{$queue}].\n");
+            break;
+
+        case 'schedule:run':
+            /** @var Scheduler $scheduler */
+            $scheduler = $container->get(Scheduler::class);
+            $force = in_array('--force', array_slice($argv, 2), true);
+            $ran = $scheduler->run($force);
+            fwrite(STDOUT, $ran === []
+                ? "No scheduled tasks were due.\n"
+                : ('Ran: ' . implode(', ', $ran) . "\n"));
+            break;
+
+        default:
+            fwrite(STDOUT, <<<TXT
+            Sell.getxtra.in console
+
+            Commands:
+              migrate         Apply pending database migrations
+              rollback        Roll back the last migration batch
+              seed            Seed baseline data
+              clear-balances  Clear seller earnings past the refund window
+              queue:work      Process queued jobs (optional queue name arg)
+              schedule:run    Run due scheduled tasks (--force to run all)
+
+            TXT);
+            break;
+    }
+    exit(0);
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}

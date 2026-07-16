@@ -1,0 +1,79 @@
+# High-availability topology for Sell.getxtra.in (Req 17.1–17.3).
+#
+# - Stateless web tier (scale with --scale web=N) behind an nginx load balancer;
+#   sessions + cache live in Redis so any node can serve any request.
+# - Background workers run separately and scale independently of web.
+# - MySQL primary + read replica; the app routes reads to the replica
+#   (DB_READ_HOST) and writes/transactions to the primary.
+
+version: "3.9"
+
+services:
+  lb:
+    image: nginx:1.27-alpine
+    ports: ["80:80"]
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [web]
+
+  web:
+    build: { context: ../.., dockerfile: deploy/Dockerfile }
+    command: ["php-fpm"]
+    environment:
+      APP_ENV: production
+      SESSION_DRIVER: cache          # stateless: sessions in Redis
+      CACHE_DRIVER: redis
+      QUEUE_DRIVER: database
+      REDIS_HOST: redis
+      DB_HOST: mysql-primary         # writes
+      DB_READ_HOST: mysql-replica    # reads (Req 16.3)
+    depends_on: [redis, mysql-primary, mysql-replica]
+    deploy:
+      replicas: 3                    # horizontal scale behind the LB
+
+  worker:
+    build: { context: ../.., dockerfile: deploy/Dockerfile }
+    # Runs the queue worker + scheduler; scale independently of web (Req 17.2).
+    command: ["sh", "-c", "while true; do php bin/console queue:work; php bin/console schedule:run; sleep 5; done"]
+    environment:
+      QUEUE_DRIVER: database
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+      DB_HOST: mysql-primary
+      DB_READ_HOST: mysql-replica
+    depends_on: [redis, mysql-primary]
+    deploy:
+      replicas: 2
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redis-data:/data]
+
+  mysql-primary:
+    image: mysql:8.0
+    command:
+      - "--server-id=1"
+      - "--log-bin=mysql-bin"
+      - "--binlog-format=ROW"
+      - "--gtid-mode=ON"
+      - "--enforce-gtid-consistency=ON"
+    environment:
+      MYSQL_DATABASE: sell_getxtra
+    volumes: [primary-data:/var/lib/mysql]
+
+  mysql-replica:
+    image: mysql:8.0
+    command:
+      - "--server-id=2"
+      - "--relay-log=relay-bin"
+      - "--read-only=ON"
+      - "--gtid-mode=ON"
+      - "--enforce-gtid-consistency=ON"
+    depends_on: [mysql-primary]
+    volumes: [replica-data:/var/lib/mysql]
+
+volumes:
+  redis-data:
+  primary-data:
+  replica-data:

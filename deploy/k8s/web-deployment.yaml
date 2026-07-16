@@ -1,0 +1,45 @@
+# Stateless web tier — zero-downtime rolling deploy (Req 23.4 / 17.1).
+# maxUnavailable=0 keeps full capacity during rollouts; readiness gates traffic
+# on /readyz; a preStop drain + graceful termination avoids dropped requests.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sell-web
+  labels: { app: sell-getxtra, tier: web }
+spec:
+  replicas: 3
+  revisionHistoryLimit: 10          # keep history for `kubectl rollout undo`
+  selector:
+    matchLabels: { app: sell-getxtra, tier: web }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0             # never drop below desired capacity
+  template:
+    metadata:
+      labels: { app: sell-getxtra, tier: web }
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: web
+          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          ports: [{ containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: sell-config }
+            - secretRef: { name: sell-secrets }
+          readinessProbe:              # gates traffic until dependencies are ready
+            httpGet: { path: /readyz, port: 8080 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:               # restarts a wedged process
+            httpGet: { path: /healthz, port: 8080 }
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          lifecycle:
+            preStop:                   # drain in-flight requests before SIGTERM
+              exec: { command: ["sh", "-c", "sleep 5"] }
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "512Mi" }

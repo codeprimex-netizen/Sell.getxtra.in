@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         colors="true"
+         failOnWarning="true"
+         failOnRisky="true"
+         cacheDirectory=".phpunit.cache">
+    <!--
+      Layered test suites (Req 24.1/24.2/24.3). The offline script suites under
+      tests/*.php (run via `php bin/run-tests.php`) remain the fast feedback
+      loop; these PHPUnit suites add coverage measurement + formal reporting in
+      CI. Run: vendor/bin/phpunit --testsuite Unit
+    -->
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        <testsuite name="E2E">
+            <directory>tests/E2E</directory>
+        </testsuite>
+        <testsuite name="Security">
+            <directory>tests/Security</directory>
+        </testsuite>
+    </testsuites>
+
+    <!-- Coverage scope: the critical business modules we gate a threshold on. -->
+    <source>
+        <include>
+            <directory suffix=".php">src/Domain</directory>
+            <directory suffix=".php">src/Application</directory>
+            <directory suffix=".php">src/Infrastructure</directory>
+        </include>
+        <exclude>
+            <directory suffix=".php">src/Infrastructure/Search</directory>
+        </exclude>
+    </source>
+
+    <coverage>
+        <report>
+            <clover outputFile="build/coverage/clover.xml"/>
+            <text outputFile="php://stdout" showOnlySummary="true"/>
+        </report>
+    </coverage>
+</phpunit>

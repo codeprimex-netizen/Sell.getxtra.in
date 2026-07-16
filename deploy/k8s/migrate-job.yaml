@@ -1,0 +1,21 @@
+# Gated schema migration (Req 23.3). Runs to completion before the app rollout.
+# Migrations must be expand-only (backward compatible) so the old and new app
+# versions can run simultaneously during the rolling update.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sell-migrate
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          command: ["php", "bin/console", "migrate"]
+          envFrom:
+            - configMapRef: { name: sell-config }
+            - secretRef: { name: sell-secrets }

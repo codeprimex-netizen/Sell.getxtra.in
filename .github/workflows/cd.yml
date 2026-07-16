@@ -1,0 +1,114 @@
+name: CD
+
+# Continuous delivery (Req 23.3/23.4): build and publish an immutable image,
+# deploy to staging automatically, then to production behind a manual approval
+# (GitHub Environment protection rule). Schema changes run as gated, expand-
+# only migrations before the rolling app deploy.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Existing image tag to (re)deploy'
+        required: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  build-push:
+    name: Build & publish image
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        run: echo "tag=sha-${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.meta.outputs.tag }}
+            ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to staging
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.sell.getxtra.in
+    env:
+      TAG: ${{ github.event.inputs.image_tag || needs.build-push.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Configure kube context
+        run: echo "${{ secrets.STAGING_KUBECONFIG }}" | base64 -d > "$HOME/.kube/config"
+      - name: Gated migrations (expand phase)
+        run: |
+          kubectl apply -f deploy/k8s/migrate-job.yaml
+          kubectl set image job/sell-migrate migrate="${IMAGE}:${TAG}" || true
+          kubectl wait --for=condition=complete --timeout=300s job/sell-migrate
+      - name: Rolling deploy web + worker
+        run: |
+          kubectl set image deployment/sell-web web="${IMAGE}:${TAG}"
+          kubectl set image deployment/sell-worker worker="${IMAGE}:${TAG}"
+          kubectl rollout status deployment/sell-web --timeout=300s
+          kubectl rollout status deployment/sell-worker --timeout=300s
+      - name: Smoke test
+        run: curl -fsS https://staging.sell.getxtra.in/readyz
+
+  deploy-production:
+    name: Deploy to production
+    needs: [build-push, deploy-staging]
+    runs-on: ubuntu-latest
+    # The `production` environment requires a manual reviewer approval
+    # (configured in repo settings) before this job runs.
+    environment:
+      name: production
+      url: https://www.sell.getxtra.in
+    env:
+      TAG: ${{ github.event.inputs.image_tag || needs.build-push.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-kubectl@v4
+      - name: Configure kube context
+        run: echo "${{ secrets.PROD_KUBECONFIG }}" | base64 -d > "$HOME/.kube/config"
+      - name: Gated migrations (expand phase, backward-compatible)
+        run: |
+          kubectl set image job/sell-migrate migrate="${IMAGE}:${TAG}" --local -o yaml \
+            | kubectl apply -f -
+          kubectl wait --for=condition=complete --timeout=600s job/sell-migrate
+      - name: Rolling deploy (zero-downtime)
+        run: |
+          kubectl set image deployment/sell-web web="${IMAGE}:${TAG}"
+          kubectl set image deployment/sell-worker worker="${IMAGE}:${TAG}"
+      - name: Wait for rollout, auto-rollback on failure
+        run: |
+          if ! kubectl rollout status deployment/sell-web --timeout=300s; then
+            echo "::error::web rollout failed — rolling back"
+            kubectl rollout undo deployment/sell-web
+            kubectl rollout status deployment/sell-web --timeout=300s
+            exit 1
+          fi
+          kubectl rollout status deployment/sell-worker --timeout=300s || kubectl rollout undo deployment/sell-worker
+      - name: Post-deploy smoke test
+        run: curl -fsS https://www.sell.getxtra.in/readyz

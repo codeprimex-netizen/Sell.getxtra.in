@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sell-web
+  labels: { app: sell-getxtra, tier: web }
+spec:
+  selector: { app: sell-getxtra, tier: web }
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

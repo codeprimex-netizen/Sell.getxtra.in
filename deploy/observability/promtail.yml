@@ -1,0 +1,32 @@
+# Promtail configuration to ship the app's structured JSON logs to Loki
+# (Req 15.1). The application logs one JSON object per line with a request_id,
+# service, env, level, and context. Set LOG_STREAM=true to log to stdout in
+# containers so the platform collects them directly.
+
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: sell-getxtra
+    static_configs:
+      - targets: [localhost]
+        labels:
+          job: sell-getxtra
+          __path__: /var/log/sell-getxtra/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            request_id: request_id
+            service: service
+            env: env
+      - labels:
+          level:
+          service:
+          env:
