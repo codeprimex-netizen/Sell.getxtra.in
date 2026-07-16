@@ -120,6 +120,37 @@ final class StructuredData
     }
 
     /**
+     * FAQPage node (Google FAQ rich-result eligible).
+     *
+     * @param array<int, array{q:string, a:string}> $items question/answer pairs
+     * @return array<string, mixed>
+     */
+    public static function faqPage(array $items): array
+    {
+        $questions = [];
+        foreach ($items as $item) {
+            $question = trim((string) ($item['q'] ?? ''));
+            $answer = trim((string) ($item['a'] ?? ''));
+            if ($question === '' || $answer === '') {
+                continue;
+            }
+            $questions[] = [
+                '@type'          => 'Question',
+                'name'           => $question,
+                'acceptedAnswer' => [
+                    '@type' => 'Answer',
+                    'text'  => $answer,
+                ],
+            ];
+        }
+
+        return [
+            '@type'      => 'FAQPage',
+            'mainEntity' => $questions,
+        ];
+    }
+
+    /**
      * Product node (with Offer + optional AggregateRating + brand + seller).
      *
      * @param array<string, mixed> $p Expected: title, description, id, slug,

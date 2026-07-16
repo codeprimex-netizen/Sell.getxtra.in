@@ -54,6 +54,7 @@ $flashError = $flash_error ?? null;
     <a class="brand" href="/"><?= e($app_name) ?></a>
     <nav>
       <a href="/products">Browse</a>
+      <a href="/faq">Help</a>
       <?php if ($authUser !== null): ?>
         <a href="/dashboard">Dashboard</a>
         <a href="/seller/products">Sell</a>

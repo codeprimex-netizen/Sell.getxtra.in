@@ -81,6 +81,18 @@ $check('itemList numbers items and skips slugless entries',
     && ($list['itemListElement'][0]['url'] ?? '') === 'https://www.code.getxtra.in/product/alpha'
     && ($list['itemListElement'][1]['position'] ?? 0) === 2);
 
+$faq = StructuredData::faqPage([
+    ['q' => 'How do I buy?', 'a' => 'Add to cart and checkout.'],
+    ['q' => '', 'a' => 'dropped — no question'],
+    ['q' => 'no answer', 'a' => ''],
+]);
+$check('faqPage builds Question/Answer and skips incomplete pairs',
+    ($faq['@type'] ?? '') === 'FAQPage'
+    && count($faq['mainEntity']) === 1
+    && ($faq['mainEntity'][0]['@type'] ?? '') === 'Question'
+    && ($faq['mainEntity'][0]['acceptedAnswer']['@type'] ?? '') === 'Answer'
+    && ($faq['mainEntity'][0]['acceptedAnswer']['text'] ?? '') === 'Add to cart and checkout.');
+
 echo "\n-- Seo head renderer --\n";
 
 $seo = (new Seo(
@@ -169,6 +181,15 @@ $check('GET /site.webmanifest is 200 application/manifest+json',
     $manifest->status() === 200 && str_contains($manifest->headers()['Content-Type'] ?? '', 'application/manifest+json'));
 $check('manifest declares name, start_url and standalone display',
     str_contains($mb, '"name": "Code.getxtra.in"') && str_contains($mb, '"start_url": "/"') && str_contains($mb, '"display": "standalone"'));
+
+$faqPage = $kernel->handle($make('/faq'));
+$fb = $faqPage->body();
+$check('GET /faq is 200', $faqPage->status() === 200);
+$check('faq page renders questions', str_contains($fb, 'Frequently asked questions') && str_contains($fb, 'How do I buy a product?'));
+$check('faq page emits FAQPage JSON-LD with Question + Answer',
+    str_contains($fb, '"FAQPage"') && str_contains($fb, '"Question"') && str_contains($fb, '"acceptedAnswer"'));
+$check('faq page includes BreadcrumbList', str_contains($fb, '"BreadcrumbList"'));
+$check('faq page is indexable', str_contains($fb, 'content="index, follow'));
 
 echo "\n";
 echo $failures === 0 ? "OK — advanced SEO verified.\n" : "FAILED — {$failures} check(s) failed.\n";
