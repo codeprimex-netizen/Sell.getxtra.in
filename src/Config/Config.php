@@ -44,6 +44,17 @@ final class Config
             'invoice' => [
                 'format' => Env::get('INVOICE_FORMAT', 'pdf'),  // pdf | html
             ],
+            'mail' => [
+                'driver'       => Env::get('MAIL_DRIVER', 'log'),   // log | smtp
+                'host'         => Env::get('MAIL_HOST', '127.0.0.1'),
+                'port'         => (int) Env::get('MAIL_PORT', 1025),
+                'username'     => Env::get('MAIL_USERNAME', ''),
+                'password'     => Env::get('MAIL_PASSWORD', ''),
+                'encryption'   => Env::get('MAIL_ENCRYPTION', 'tls'),  // tls | ssl | none
+                'from_address' => Env::get('MAIL_FROM_ADDRESS', 'no-reply@sell.getxtra.in'),
+                'from_name'    => Env::get('MAIL_FROM_NAME', 'Sell.getxtra.in'),
+                'log_path'     => Env::get('MAIL_LOG_PATH', 'storage/logs/mail.log'),
+            ],
             'affiliate' => [
                 'enabled'      => (bool) Env::get('AFFILIATE_ENABLED', true),
                 'default_rate' => (float) Env::get('AFFILIATE_DEFAULT_RATE', 10),  // % of subtotal

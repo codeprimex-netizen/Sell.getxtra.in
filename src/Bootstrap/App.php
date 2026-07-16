@@ -538,8 +538,28 @@ final class App
         $basePath = $this->basePath;
         $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
 
-        // Transactional mail port — dev logs to disk so the pipeline runs offline.
+        // Transactional mail port (Req 13.1): SMTP in production, disk log in dev.
         $c->singleton(Mailer::class, static function () use ($basePath): Mailer {
+            if ((string) Config::get('mail.driver', 'log') === 'smtp') {
+                $encryption = (string) Config::get('mail.encryption', 'tls');
+                $mime = new \App\Infrastructure\Mail\MimeMessage(
+                    (string) Config::get('mail.from_address', 'no-reply@sell.getxtra.in'),
+                    (string) Config::get('mail.from_name', 'Sell.getxtra.in'),
+                );
+                return new \App\Infrastructure\Mail\SmtpMailer(
+                    new \App\Infrastructure\Mail\Smtp\StreamSmtpConnection(
+                        (string) Config::get('mail.host', '127.0.0.1'),
+                        (int) Config::get('mail.port', 587),
+                        $encryption,
+                    ),
+                    $mime,
+                    (string) Config::get('mail.from_address', 'no-reply@sell.getxtra.in'),
+                    $encryption,
+                    (string) Config::get('mail.username', ''),
+                    (string) Config::get('mail.password', ''),
+                );
+            }
+
             $path = (string) Config::get('mail.log_path', 'storage/logs/mail.log');
             if (!str_starts_with($path, '/')) {
                 $path = $basePath . '/' . $path;
