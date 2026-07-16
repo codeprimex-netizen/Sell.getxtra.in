@@ -17,11 +17,64 @@ declare(strict_types=1);
 
 use App\Console\Installer;
 
+// The installer runs BEFORE the app is configured, so surface any problem
+// clearly (missing extension, wrong PHP version, unwritable path, DB error)
+// instead of a blank "HTTP 500". install.php is deleted after setup.
+error_reporting(E_ALL);
+@ini_set('display_errors', '1');
+
 $basePath = dirname(__DIR__);
-require $basePath . '/vendor/autoload.php';
+
+// Turn fatal errors into a readable page rather than a white 500.
+register_shutdown_function(static function (): void {
+    $error = error_get_last();
+    if ($error === null || !in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR, E_RECOVERABLE_ERROR], true)) {
+        return;
+    }
+    if (!headers_sent()) {
+        http_response_code(500);
+        header('Content-Type: text/html; charset=utf-8');
+    }
+    echo '<!doctype html><meta charset="utf-8"><title>Installer error</title>'
+        . '<div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:660px;margin:3rem auto;padding:1.5rem;'
+        . 'background:#3b0d0d;color:#fecaca;border:1px solid #7f1d1d;border-radius:12px">'
+        . '<h2 style="margin:0 0 .5rem">Installer error</h2>'
+        . '<p style="color:#fca5a5">A fatal error occurred. Fix the issue below and reload this page.</p>'
+        . '<pre style="white-space:pre-wrap;color:#fee2e2;background:#1f0808;padding:.8rem;border-radius:8px">'
+        . htmlspecialchars((string) $error['message'], ENT_QUOTES, 'UTF-8') . '</pre></div>';
+});
+
+// Hard requirement: PHP 8.2+. Give a precise, actionable message on old PHP.
+if (PHP_VERSION_ID < 80200) {
+    http_response_code(500);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta charset="utf-8"><title>PHP 8.2+ required</title>'
+        . '<div style="font-family:system-ui;max-width:660px;margin:3rem auto;padding:1.5rem;'
+        . 'background:#1f2937;color:#e2e8f0;border:1px solid #334155;border-radius:12px">'
+        . '<h2>PHP 8.2 or newer required</h2>'
+        . '<p>This server is running PHP ' . htmlspecialchars(PHP_VERSION, ENT_QUOTES, 'UTF-8') . '.</p>'
+        . '<p>In cPanel open <b>MultiPHP Manager</b>, select your domain, and switch the PHP version to <b>8.2</b> (8.3 recommended), then reload this page.</p>'
+        . '</div>';
+    exit;
+}
+
+// Guard against a missing autoloader/source tree with a clear message.
+if (!is_file($basePath . '/bootstrap/autoload.php') || !is_dir($basePath . '/src')) {
+    http_response_code(500);
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!doctype html><meta charset="utf-8"><title>Incomplete upload</title>'
+        . '<div style="font-family:system-ui;max-width:660px;margin:3rem auto;padding:1.5rem;'
+        . 'background:#1f2937;color:#e2e8f0;border:1px solid #334155;border-radius:12px">'
+        . '<h2>Application files are incomplete</h2>'
+        . '<p>The <code>src/</code> and <code>bootstrap/</code> folders were not found next to <code>public/</code>. '
+        . 'Re-upload the full project (keeping its folder structure) and reload this page.</p></div>';
+    exit;
+}
+
+require $basePath . '/bootstrap/autoload.php';
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
+    @session_start();
 }
 
 $installer = new Installer($basePath);
@@ -111,7 +164,7 @@ if ($installer->isInstalled()) {
     render('Already installed', ''
         . '<h1>Application already installed</h1>'
         . '<p class="sub">A lock file (<span class="mono">storage/installed.lock</span>) is present, so the installer is disabled.</p>'
-        . '<div class="alert ok">For security, delete <span class="mono">public/install.php</span> from your server.</div>'
+        . '<div class="alert ok">For security, delete <span class="mono">install.php</span> and <span class="mono">public/install.php</span> from your server.</div>'
         . '<p><a href="/">Go to the site</a> &middot; <a href="/login">Admin login</a></p>', 4);
 }
 
@@ -310,7 +363,7 @@ if ($step === 'finish') {
             . '<h1>Installation complete 🎉</h1>'
             . '<p class="sub">Code.getxtra.in is ready to use.</p>'
             . '<div class="alert ok">What just happened:</div><ul>' . $items . '</ul>'
-            . '<div class="alert err" style="margin-top:1.25rem">Security: delete <span class="mono">public/install.php</span> from your server now.</div>'
+            . '<div class="alert err" style="margin-top:1.25rem">Security: delete <span class="mono">install.php</span> and <span class="mono">public/install.php</span> from your server now.</div>'
             . '<p style="margin-top:1rem"><a href="/login">&rarr; Log in to the admin</a> &middot; <a href="/">Visit the storefront</a></p>', 4);
     } catch (Throwable $e) {
         render('Installation failed', ''

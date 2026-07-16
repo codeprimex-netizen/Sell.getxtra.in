@@ -22,7 +22,7 @@ use App\Infrastructure\Scheduler\Scheduler;
 
 $basePath = dirname(__DIR__);
 
-require $basePath . '/vendor/autoload.php';
+require $basePath . '/bootstrap/autoload.php';
 
 /**
  * Parse `--key=value` / `--flag` options from a CLI argv slice.
@@ -103,7 +103,7 @@ try {
             foreach ($installer->run($config, !empty($opts['force'])) as $line) {
                 fwrite(STDOUT, "  ✔ {$line}\n");
             }
-            fwrite(STDOUT, "\nDone. Delete public/install.php for security if you used the web wizard.\n");
+            fwrite(STDOUT, "\nDone. Delete install.php and public/install.php for security if you used the web wizard.\n");
             break;
 
         case 'clear-balances':
