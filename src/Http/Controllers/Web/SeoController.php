@@ -33,7 +33,11 @@ final class SeoController
         do {
             $batch = $this->products->listApprovedKeyset(null, $after, 1000);
             foreach ($batch as $p) {
-                $products[] = ['slug' => (string) $p['slug'], 'updated_at' => (string) ($p['updated_at'] ?? '')];
+                $products[] = [
+                    'slug'          => (string) $p['slug'],
+                    'updated_at'    => (string) ($p['updated_at'] ?? ''),
+                    'thumbnail_url' => (string) ($p['thumbnail_url'] ?? ''),
+                ];
             }
             $after = $batch === [] ? null : (int) $batch[array_key_last($batch)]['id'];
         } while ($batch !== [] && count($products) < self::MAX_PRODUCTS);

@@ -41,6 +41,14 @@ final class Config
             'analytics' => [
                 'ga4_id' => Env::get('GA4_MEASUREMENT_ID', ''),
             ],
+            'seo' => [
+                'logo'    => Env::get('SEO_LOGO_URL', ''),           // absolute URL to brand logo (Organization schema)
+                'twitter' => Env::get('SEO_TWITTER_HANDLE', ''),      // e.g. @codegetxtra (Twitter Card)
+                'same_as' => array_values(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) Env::get('SEO_SAME_AS', '')),
+                ))),                                                  // social profile URLs (entity reconciliation)
+            ],
             'invoice' => [
                 'format' => Env::get('INVOICE_FORMAT', 'pdf'),  // pdf | html
             ],
@@ -63,8 +71,8 @@ final class Config
             'db' => [
                 'host'      => Env::get('DB_HOST', '127.0.0.1'),
                 'port'      => (int) Env::get('DB_PORT', 3306),
-                'database'  => Env::get('DB_DATABASE', 'code_getxtra'),
-                'username'  => Env::get('DB_USERNAME', 'root'),
+                'database'  => Env::get('DB_DATABASE', 'getxtrain_Codegetxdata'),
+                'username'  => Env::get('DB_USERNAME', 'getxtrain_Codegetuser'),
                 'password'  => Env::get('DB_PASSWORD', ''),
                 'charset'   => Env::get('DB_CHARSET', 'utf8mb4'),
                 'read_host' => Env::get('DB_READ_HOST', null),

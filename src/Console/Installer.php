@@ -289,8 +289,8 @@ final class Installer
 
             'DB_HOST'     => (string) ($db['host'] ?? '127.0.0.1'),
             'DB_PORT'     => (string) ((int) ($db['port'] ?? 3306)),
-            'DB_DATABASE' => (string) ($db['database'] ?? 'code_getxtra'),
-            'DB_USERNAME' => (string) ($db['username'] ?? 'root'),
+            'DB_DATABASE' => (string) ($db['database'] ?? 'getxtrain_Codegetxdata'),
+            'DB_USERNAME' => (string) ($db['username'] ?? 'getxtrain_Codegetuser'),
             'DB_PASSWORD' => (string) ($db['password'] ?? ''),
 
             // Fresh per-install secrets.
@@ -324,8 +324,8 @@ final class Installer
         $db = (array) ($config['db'] ?? []);
         Config::set('db.host', (string) ($db['host'] ?? '127.0.0.1'));
         Config::set('db.port', (int) ($db['port'] ?? 3306));
-        Config::set('db.database', (string) ($db['database'] ?? 'code_getxtra'));
-        Config::set('db.username', (string) ($db['username'] ?? 'root'));
+        Config::set('db.database', (string) ($db['database'] ?? 'getxtrain_Codegetxdata'));
+        Config::set('db.username', (string) ($db['username'] ?? 'getxtrain_Codegetuser'));
         Config::set('db.password', (string) ($db['password'] ?? ''));
         Config::set('db.charset', (string) ($db['charset'] ?? 'utf8mb4'));
         Config::set('db.read_host', null);

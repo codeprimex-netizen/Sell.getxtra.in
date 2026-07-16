@@ -187,8 +187,8 @@ if ($step === 'requirements') {
 
 if ($step === 'database') {
     $db = install_state()['db'] ?? [
-        'host' => '127.0.0.1', 'port' => '3306', 'database' => 'code_getxtra',
-        'username' => '', 'password' => '',
+        'host' => '127.0.0.1', 'port' => '3306', 'database' => 'getxtrain_Codegetxdata',
+        'username' => 'getxtrain_Codegetuser', 'password' => '',
     ];
 
     // Submitted for testing.

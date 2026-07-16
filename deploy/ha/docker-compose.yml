@@ -59,7 +59,7 @@ services:
       - "--gtid-mode=ON"
       - "--enforce-gtid-consistency=ON"
     environment:
-      MYSQL_DATABASE: code_getxtra
+      MYSQL_DATABASE: getxtrain_Codegetxdata
     volumes: [primary-data:/var/lib/mysql]
 
   mysql-replica:

@@ -82,8 +82,8 @@ try {
                 'db' => [
                     'host'     => (string) ($opts['db-host'] ?? '127.0.0.1'),
                     'port'     => (int) ($opts['db-port'] ?? 3306),
-                    'database' => (string) ($opts['db-name'] ?? 'code_getxtra'),
-                    'username' => (string) ($opts['db-user'] ?? 'root'),
+                    'database' => (string) ($opts['db-name'] ?? 'getxtrain_Codegetxdata'),
+                    'username' => (string) ($opts['db-user'] ?? 'getxtrain_Codegetuser'),
                     'password' => (string) ($opts['db-pass'] ?? ''),
                 ],
                 'app' => [
@@ -150,7 +150,7 @@ try {
 
             Install (headless) example:
               php bin/console install \
-                --db-host=127.0.0.1 --db-port=3306 --db-name=code_getxtra \
+                --db-host=127.0.0.1 --db-port=3306 --db-name=getxtrain_Codegetxdata \
                 --db-user=root --db-pass=secret \
                 --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
                 --admin-name="Admin" --admin-email=admin@code.getxtra.in \

@@ -69,7 +69,7 @@ completes, **delete `public/install.php`** for security (a
 ```bash
 composer install
 php bin/console install \
-  --db-host=127.0.0.1 --db-port=3306 --db-name=code_getxtra \
+  --db-host=127.0.0.1 --db-port=3306 --db-name=getxtrain_Codegetxdata \
   --db-user=root --db-pass=secret \
   --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
   --admin-name="Admin" --admin-email=admin@code.getxtra.in \
