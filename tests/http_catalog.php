@@ -42,8 +42,12 @@ $check('GET /admin/moderation requires auth', $redirectsToLogin($make('GET', '/a
 // POST hits global CSRF middleware (419) before the auth guard — still blocked.
 $check('POST /seller/products blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/products'))->status() === 419);
 
-// Home still fine (no DB access).
-$check('GET / still 200', $kernel->handle($make('GET', '/'))->status() === 200);
+// Storefront home renders through the layout and degrades gracefully w/o a DB.
+$homeRes = $kernel->handle($make('GET', '/'));
+$check('GET / renders the storefront home (200, degraded-safe)', $homeRes->status() === 200);
+$check('home uses the shared layout + storefront content',
+    str_contains($homeRes->body(), '<html') && str_contains($homeRes->body(), 'Featured products')
+    && str_contains($homeRes->body(), 'href="/products"'));
 
 // Phase 4 route wiring + guards (no DB access on these paths).
 $check('GET /account/wishlist requires auth', $redirectsToLogin($make('GET', '/account/wishlist')));

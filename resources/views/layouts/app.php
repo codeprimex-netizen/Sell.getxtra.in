@@ -53,9 +53,10 @@ $flashError = $flash_error ?? null;
   <header>
     <a class="brand" href="/"><?= e($app_name) ?></a>
     <nav>
+      <a href="/products">Browse</a>
       <?php if ($authUser !== null): ?>
         <a href="/dashboard">Dashboard</a>
-        <a href="/account/sessions">Sessions</a>
+        <a href="/seller/products">Sell</a>
         <form action="/logout" method="post" style="display:inline">
           <input type="hidden" name="_token" value="<?= e($csrf_token ?? '') ?>">
           <button type="submit" style="width:auto;margin:0;padding:.3rem .8rem;background:#1e293b;color:#e2e8f0;font-weight:600">Log out</button>
