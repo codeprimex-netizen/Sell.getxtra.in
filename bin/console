@@ -16,6 +16,8 @@ use App\Bootstrap\App;
 use App\Console\MigrationRunner;
 use App\Console\Seeder;
 use App\Infrastructure\Persistence\ConnectionManager;
+use App\Infrastructure\Queue\Worker;
+use App\Infrastructure\Scheduler\Scheduler;
 
 $basePath = dirname(__DIR__);
 
@@ -53,6 +55,25 @@ try {
             fwrite(STDOUT, "Cleared {$count} order(s) from pending to cleared.\n");
             break;
 
+        case 'queue:work':
+            /** @var Worker $worker */
+            $worker = $container->get(Worker::class);
+            $queue = $argv[2] ?? 'default';
+            // Bounded drain so an external supervisor/cron can loop safely.
+            $processed = $worker->work($queue, 0, 55);
+            fwrite(STDOUT, "Processed {$processed} job(s) on queue [{$queue}].\n");
+            break;
+
+        case 'schedule:run':
+            /** @var Scheduler $scheduler */
+            $scheduler = $container->get(Scheduler::class);
+            $force = in_array('--force', array_slice($argv, 2), true);
+            $ran = $scheduler->run($force);
+            fwrite(STDOUT, $ran === []
+                ? "No scheduled tasks were due.\n"
+                : ('Ran: ' . implode(', ', $ran) . "\n"));
+            break;
+
         default:
             fwrite(STDOUT, <<<TXT
             Sell.getxtra.in console
@@ -62,6 +83,8 @@ try {
               rollback        Roll back the last migration batch
               seed            Seed baseline data
               clear-balances  Clear seller earnings past the refund window
+              queue:work      Process queued jobs (optional queue name arg)
+              schedule:run    Run due scheduled tasks (--force to run all)
 
             TXT);
             break;

@@ -82,6 +82,13 @@ $check('GET /finance/payouts requires auth', $redirectsToLogin($make('GET', '/fi
 $check('GET /finance/kyc requires auth', $redirectsToLogin($make('GET', '/finance/kyc')));
 $check('POST /seller/payouts blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/payouts'))->status() === 419);
 
+// Phase 9: notification centre requires auth; unsubscribe is public.
+$check('GET /account/notifications requires auth', $redirectsToLogin($make('GET', '/account/notifications')));
+$check('POST /account/notifications/read blocked without CSRF (419)', $kernel->handle($make('POST', '/account/notifications/read'))->status() === 419);
+$unsub = $kernel->handle($make('GET', '/unsubscribe/sometoken'));
+$check('GET /unsubscribe/{token} is public (not a login redirect)',
+    !($unsub->status() === 302 && ($unsub->headers()['Location'] ?? '') === '/login'));
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

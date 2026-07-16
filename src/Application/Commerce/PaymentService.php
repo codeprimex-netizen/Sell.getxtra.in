@@ -13,6 +13,7 @@ use App\Domain\Commerce\PaymentStatus;
 use App\Domain\Commerce\WebhookEventRepositoryInterface;
 use App\Infrastructure\Observability\Logger;
 use App\Infrastructure\Payment\PaymentGatewayRegistry;
+use App\Infrastructure\Queue\Dispatcher;
 
 /**
  * Processes gateway webhooks (Req 9.3 / 9.6). Verifies the signature, then
@@ -31,6 +32,7 @@ final class PaymentService
         private EntitlementService $entitlements,
         private LedgerService $ledger,
         private Logger $logger,
+        private ?Dispatcher $dispatcher = null,
     ) {
     }
 
@@ -115,6 +117,21 @@ final class PaymentService
 
         if (!empty($order['coupon_id'])) {
             $this->coupons->incrementUsage((int) $order['coupon_id']);
+        }
+
+        // Fan out async work (Phase 9): generate the invoice off the request
+        // path and notify the buyer. Under the sync driver these run inline.
+        if ($this->dispatcher !== null) {
+            $this->dispatcher->dispatch('invoice.generate', ['order_id' => $orderId]);
+            $this->dispatcher->dispatch('notification.push', [
+                'user_id' => (int) $order['buyer_id'],
+                'type'    => 'order_paid',
+                'data'    => [
+                    'order_number' => (string) $order['order_number'],
+                    'total'        => (string) ($order['total'] ?? ''),
+                    'currency'     => (string) ($order['currency'] ?? ''),
+                ],
+            ]);
         }
 
         $this->logger->info('Order paid', ['order_id' => $orderId, 'order' => $order['order_number']]);

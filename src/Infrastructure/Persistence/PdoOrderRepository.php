@@ -82,6 +82,14 @@ final class PdoOrderRepository extends Repository implements OrderRepositoryInte
         return $stmt->execute(['s' => $status, 'id' => $orderId]);
     }
 
+    public function setInvoiceKey(int $orderId, string $invoiceKey): bool
+    {
+        $stmt = $this->connection->write()->prepare(
+            "UPDATE {$this->table} SET invoice_key = :k WHERE id = :id"
+        );
+        return $stmt->execute(['k' => $invoiceKey, 'id' => $orderId]);
+    }
+
     public function forBuyer(int $buyerId, int $limit = 50, int $offset = 0): array
     {
         $stmt = $this->connection->read()->prepare(

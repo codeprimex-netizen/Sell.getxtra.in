@@ -219,6 +219,15 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
         return true;
     }
 
+    public function setInvoiceKey(int $orderId, string $invoiceKey): bool
+    {
+        if (!isset($this->orders[$orderId])) {
+            return false;
+        }
+        $this->orders[$orderId]['invoice_key'] = $invoiceKey;
+        return true;
+    }
+
     public function forBuyer(int $buyerId, int $limit = 50, int $offset = 0): array
     {
         return array_values(array_filter($this->orders, static fn ($o) => (int) $o['buyer_id'] === $buyerId));

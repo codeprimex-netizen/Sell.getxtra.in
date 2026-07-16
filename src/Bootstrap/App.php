@@ -83,6 +83,25 @@ use App\Infrastructure\Persistence\PdoRefundRepository;
 use App\Infrastructure\Persistence\PdoWebhookEventRepository;
 use App\Domain\Audit\AuditLogRepositoryInterface;
 use App\Infrastructure\Persistence\PdoAuditLogRepository;
+use App\Application\Commerce\LedgerService;
+use App\Domain\Admin\SettingsRepositoryInterface;
+use App\Domain\Notification\NotificationPreferenceRepositoryInterface;
+use App\Domain\Notification\NotificationRepositoryInterface;
+use App\Infrastructure\Mail\LogMailer;
+use App\Infrastructure\Mail\Mailer;
+use App\Infrastructure\Persistence\PdoNotificationPreferenceRepository;
+use App\Infrastructure\Persistence\PdoNotificationRepository;
+use App\Infrastructure\Queue\DatabaseQueueDriver;
+use App\Infrastructure\Queue\Dispatcher;
+use App\Infrastructure\Queue\JobRegistry;
+use App\Infrastructure\Queue\QueueDriver;
+use App\Infrastructure\Queue\SyncQueueDriver;
+use App\Infrastructure\Queue\Worker;
+use App\Infrastructure\Scheduler\Scheduler;
+use App\Jobs\Handlers\DispatchWebhookHandler;
+use App\Jobs\Handlers\GenerateInvoiceHandler;
+use App\Jobs\Handlers\SendEmailHandler;
+use App\Jobs\Handlers\SendNotificationHandler;
 
 /**
  * Application bootstrapper.
@@ -113,6 +132,7 @@ final class App
         $this->registerCommerceServices();
         $this->registerAdminServices();
         $this->registerSellerServices();
+        $this->registerQueueServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -305,6 +325,82 @@ final class App
             static fn (Container $c) => new \App\Infrastructure\Persistence\PdoPayoutRepository($conn($c)));
         $c->singleton(\App\Domain\Seller\SellerStatsRepositoryInterface::class,
             static fn (Container $c) => new \App\Infrastructure\Persistence\PdoSellerStatsRepository($conn($c)));
+    }
+
+    /**
+     * Bind the async pipeline (Phase 9): mailer, notification repositories,
+     * the job registry + queue driver + dispatcher/worker, and the scheduler
+     * with its recurring tasks. Application services (NotificationService,
+     * InvoiceService, handlers) autowire from these bindings.
+     */
+    private function registerQueueServices(): void
+    {
+        $c = $this->container;
+        $basePath = $this->basePath;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        // Transactional mail port — dev logs to disk so the pipeline runs offline.
+        $c->singleton(Mailer::class, static function () use ($basePath): Mailer {
+            $path = (string) Config::get('mail.log_path', 'storage/logs/mail.log');
+            if (!str_starts_with($path, '/')) {
+                $path = $basePath . '/' . $path;
+            }
+            return new LogMailer($path);
+        });
+
+        // Notification persistence (Req 13).
+        $c->singleton(NotificationRepositoryInterface::class,
+            static fn (Container $c) => new PdoNotificationRepository($conn($c)));
+        $c->singleton(NotificationPreferenceRepositoryInterface::class,
+            static fn (Container $c) => new PdoNotificationPreferenceRepository($conn($c)));
+
+        // Job registry: map serialized job names to container-resolved handlers.
+        $c->singleton(JobRegistry::class, static function (Container $c): JobRegistry {
+            $registry = new JobRegistry();
+            $registry->register('email.send', static fn () => $c->get(SendEmailHandler::class));
+            $registry->register('notification.push', static fn () => $c->get(SendNotificationHandler::class));
+            $registry->register('invoice.generate', static fn () => $c->get(GenerateInvoiceHandler::class));
+            $registry->register('webhook.dispatch', static fn () => $c->get(DispatchWebhookHandler::class));
+            return $registry;
+        });
+
+        // Queue driver: durable database queue in production, inline sync in dev.
+        $c->singleton(QueueDriver::class, static function (Container $c): QueueDriver {
+            $driver = (string) Config::get('queue.driver', 'sync');
+            if ($driver === 'database') {
+                return new DatabaseQueueDriver($c->get(ConnectionManager::class));
+            }
+            return new SyncQueueDriver($c->get(JobRegistry::class), $c->get(Logger::class));
+        });
+
+        $c->singleton(Dispatcher::class,
+            static fn (Container $c) => new Dispatcher($c->get(QueueDriver::class)));
+
+        $c->singleton(Worker::class, static fn (Container $c) => new Worker(
+            $c->get(QueueDriver::class),
+            $c->get(JobRegistry::class),
+            $c->get(Logger::class),
+        ));
+
+        // Scheduler (Req 18.3): recurring maintenance tasks. An external cron
+        // calls `bin/console schedule:run` every minute.
+        $c->singleton(Scheduler::class, static function (Container $c): Scheduler {
+            $scheduler = new Scheduler($c->get(SettingsRepositoryInterface::class));
+
+            // Clear seller earnings once the refund window has elapsed (Req 11.4).
+            $scheduler->register('clear_balances', 1440, static function () use ($c): void {
+                $orders = $c->get(OrderRepositoryInterface::class);
+                $ledger = $c->get(LedgerService::class);
+                $days = (int) Config::get('commerce.refund_window_days', 14);
+                $cutoff = date('Y-m-d H:i:s', time() - ($days * 86400));
+                foreach ($orders->paidOrdersBefore($cutoff, 200) as $order) {
+                    $items = $orders->items((int) $order['id']);
+                    $ledger->clearEarning((int) $order['id'], $items, (string) $order['currency']);
+                }
+            });
+
+            return $scheduler;
+        });
     }
 
     private function registerHttp(): void

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\Account\DashboardController;
+use App\Http\Controllers\Web\Account\NotificationController;
 use App\Http\Controllers\Web\Account\SessionController;
 use App\Http\Controllers\Web\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\PaymentWebhookController;
 use App\Http\Controllers\Web\ReviewController;
 use App\Http\Controllers\Web\SearchController;
+use App\Http\Controllers\Web\UnsubscribeController;
 use App\Http\Controllers\Web\Finance\KycController as FinanceKycController;
 use App\Http\Controllers\Web\Finance\PayoutController as FinancePayoutController;
 use App\Http\Controllers\Web\Seller\DashboardController as SellerDashboardController;
@@ -84,6 +86,14 @@ return static function (Router $router): void {
     $router->get('/account/sessions', [SessionController::class, 'index'], ['auth']);
     $router->post('/account/sessions/revoke', [SessionController::class, 'revoke'], ['auth']);
     $router->post('/account/sessions/revoke-others', [SessionController::class, 'revokeOthers'], ['auth']);
+
+    // ── In-app notifications (Req 13.2) ───────────────────────────
+    $router->get('/account/notifications', [NotificationController::class, 'index'], ['auth']);
+    $router->post('/account/notifications/read', [NotificationController::class, 'markRead'], ['auth']);
+    $router->post('/account/notifications/read-all', [NotificationController::class, 'markAllRead'], ['auth']);
+
+    // One-click email unsubscribe via signed token — public (Req 13.3).
+    $router->get('/unsubscribe/{token}', [UnsubscribeController::class, 'unsubscribe']);
 
     // ── Public catalog + search (Req 4 / 6) ───────────────────────
     $router->get('/products', [CatalogController::class, 'index']);

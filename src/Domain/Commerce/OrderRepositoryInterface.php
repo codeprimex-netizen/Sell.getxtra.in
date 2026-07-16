@@ -29,6 +29,8 @@ interface OrderRepositoryInterface
 
     public function updateStatus(int $orderId, string $status): bool;
 
+    public function setInvoiceKey(int $orderId, string $invoiceKey): bool;
+
     /** @return array<int, array<string,mixed>> orders for a buyer (newest first) */
     public function forBuyer(int $buyerId, int $limit = 50, int $offset = 0): array;
 
