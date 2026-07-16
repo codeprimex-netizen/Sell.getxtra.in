@@ -15,6 +15,19 @@ final class PdoEntitlementRepository extends Repository implements EntitlementRe
         return $this->insert($data);
     }
 
+    public function findById(int $id): ?array
+    {
+        return $this->find($id);
+    }
+
+    public function incrementDownloadCount(int $entitlementId): void
+    {
+        $stmt = $this->connection->write()->prepare(
+            "UPDATE {$this->table} SET download_count = download_count + 1 WHERE id = :id"
+        );
+        $stmt->execute(['id' => $entitlementId]);
+    }
+
     public function hasActiveForProduct(int $buyerId, int $productId): bool
     {
         $stmt = $this->connection->read()->prepare(

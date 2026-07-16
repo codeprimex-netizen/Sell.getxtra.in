@@ -9,12 +9,21 @@ namespace App\Http;
  */
 final class Response
 {
+    /** @var (callable():void)|null Streamer for large/binary responses. */
+    private $streamer = null;
+
     /** @param array<string, string> $headers */
     public function __construct(
         private string $body = '',
         private int $status = 200,
         private array $headers = [],
     ) {
+    }
+
+    /** Attach a callback that echoes the body directly (used for file downloads). */
+    public function setStreamer(callable $streamer): void
+    {
+        $this->streamer = $streamer;
     }
 
     /** @param array<string, mixed> $data */
@@ -81,6 +90,12 @@ final class Response
                 header("{$name}: {$value}", true);
             }
         }
+
+        if ($this->streamer !== null) {
+            ($this->streamer)();
+            return;
+        }
+
         echo $this->body;
     }
 }

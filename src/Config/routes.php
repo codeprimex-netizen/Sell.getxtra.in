@@ -10,9 +10,11 @@ use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\PasswordResetController;
 use App\Http\Controllers\Web\Auth\RegisterController;
 use App\Http\Controllers\Web\Auth\TwoFactorController;
+use App\Http\Controllers\Api\V1\LicenseController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\OrderController;
@@ -99,6 +101,13 @@ return static function (Router $router): void {
     $router->get('/orders', [OrderController::class, 'index'], ['auth']);
     $router->get('/orders/{id}', [OrderController::class, 'show'], ['auth']);
     $router->get('/account/library', [OrderController::class, 'library'], ['auth']);
+
+    // Secure downloads: mint a signed link, then redeem + stream (Req 10).
+    $router->get('/downloads/{entitlement}', [DownloadController::class, 'request'], ['auth', 'throttle:60,1']);
+    $router->get('/download/{token}', [DownloadController::class, 'serve'], ['auth']);
+
+    // Public license verification API (Req 10.3).
+    $router->get('/api/v1/licenses/verify', [LicenseController::class, 'verify'], ['throttle:60,1']);
 
     // ── Seller product management (Req 4 / 5) ─────────────────────
     $router->get('/seller/products', [ProductController::class, 'index'], ['auth', 'can:product.create']);

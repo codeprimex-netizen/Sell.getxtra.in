@@ -260,6 +260,18 @@ final class InMemoryEntitlementRepository implements EntitlementRepositoryInterf
         return $id;
     }
 
+    public function findById(int $id): ?array
+    {
+        return $this->rows[$id] ?? null;
+    }
+
+    public function incrementDownloadCount(int $entitlementId): void
+    {
+        if (isset($this->rows[$entitlementId])) {
+            $this->rows[$entitlementId]['download_count'] = (int) ($this->rows[$entitlementId]['download_count'] ?? 0) + 1;
+        }
+    }
+
     public function hasActiveForProduct(int $buyerId, int $productId): bool
     {
         foreach ($this->rows as $e) {
@@ -380,5 +392,31 @@ final class InMemoryRefundRepository implements RefundRepositoryInterface
     public function forOrder(int $orderId): array
     {
         return array_values(array_filter($this->rows, static fn ($r) => (int) $r['order_id'] === $orderId));
+    }
+}
+
+
+final class InMemoryAuditLogRepository implements \App\Domain\Audit\AuditLogRepositoryInterface
+{
+    /** @var array<int, array<string,mixed>> */
+    public array $rows = [];
+
+    public function record(?int $actorId, string $action, ?string $targetType, ?int $targetId, array $before, array $after, ?string $ip, ?string $requestId): void
+    {
+        $this->rows[] = compact('actorId', 'action', 'targetType', 'targetId', 'before', 'after', 'ip', 'requestId');
+    }
+
+    public function forTarget(string $targetType, int $targetId, int $limit = 50): array
+    {
+        return array_values(array_filter(
+            $this->rows,
+            static fn ($r) => $r['targetType'] === $targetType && $r['targetId'] === $targetId
+        ));
+    }
+
+    /** Test helper: count entries with a given action. */
+    public function countAction(string $action): int
+    {
+        return count(array_filter($this->rows, static fn ($r) => $r['action'] === $action));
     }
 }

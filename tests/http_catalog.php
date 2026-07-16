@@ -60,6 +60,12 @@ $check('POST /checkout blocked without CSRF (419)', $kernel->handle($make('POST'
 // Webhook is CSRF-exempt (signature-authenticated) -> not 419; bad signature -> 400.
 $check('POST /payments/offline/webhook is CSRF-exempt, rejects bad signature (400)', $kernel->handle($make('POST', '/payments/offline/webhook'))->status() === 400);
 
+// Phase 6: secure downloads require auth; license verify API is public.
+$check('GET /downloads/1 requires auth', $redirectsToLogin($make('GET', '/downloads/1')));
+$check('GET /download/{token} requires auth', $redirectsToLogin($make('GET', '/download/sometoken')));
+$licenseRes = $kernel->handle($make('GET', '/api/v1/licenses/verify'));
+$check('GET /api/v1/licenses/verify is public JSON (not a redirect)', $licenseRes->status() !== 302);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

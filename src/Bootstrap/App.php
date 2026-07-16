@@ -81,6 +81,8 @@ use App\Infrastructure\Persistence\PdoOrderRepository;
 use App\Infrastructure\Persistence\PdoPaymentRepository;
 use App\Infrastructure\Persistence\PdoRefundRepository;
 use App\Infrastructure\Persistence\PdoWebhookEventRepository;
+use App\Domain\Audit\AuditLogRepositoryInterface;
+use App\Infrastructure\Persistence\PdoAuditLogRepository;
 
 /**
  * Application bootstrapper.
@@ -259,6 +261,10 @@ final class App
         // Now that entitlements exist, use the real purchase checker (Req 7.2).
         $c->singleton(PurchaseCheckerInterface::class, static fn (Container $c) =>
             new EntitlementPurchaseChecker($c->get(EntitlementRepositoryInterface::class)));
+
+        // Audit trail (Req 15.5) — used by secure downloads and back-office.
+        $c->singleton(AuditLogRepositoryInterface::class, static fn (Container $c) =>
+            new PdoAuditLogRepository($conn($c)));
     }
 
     private function registerHttp(): void
