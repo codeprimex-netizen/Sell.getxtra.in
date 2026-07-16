@@ -41,6 +41,9 @@ final class Config
             'analytics' => [
                 'ga4_id' => Env::get('GA4_MEASUREMENT_ID', ''),
             ],
+            'invoice' => [
+                'format' => Env::get('INVOICE_FORMAT', 'pdf'),  // pdf | html
+            ],
             'affiliate' => [
                 'enabled'      => (bool) Env::get('AFFILIATE_ENABLED', true),
                 'default_rate' => (float) Env::get('AFFILIATE_DEFAULT_RATE', 10),  // % of subtotal

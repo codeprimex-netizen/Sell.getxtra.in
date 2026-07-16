@@ -61,6 +61,7 @@ $check('POST /admin/reviews/1/moderate blocked without CSRF (419)', $kernel->han
 $check('GET /checkout requires auth', $redirectsToLogin($make('GET', '/checkout')));
 $check('GET /orders requires auth', $redirectsToLogin($make('GET', '/orders')));
 $check('GET /account/library requires auth', $redirectsToLogin($make('GET', '/account/library')));
+$check('GET /orders/1/invoice requires auth', $redirectsToLogin($make('GET', '/orders/1/invoice')));
 $check('POST /cart/add blocked without CSRF (419)', $kernel->handle($make('POST', '/cart/add'))->status() === 419);
 $check('POST /checkout blocked without CSRF (419)', $kernel->handle($make('POST', '/checkout'))->status() === 419);
 // Webhook is CSRF-exempt (signature-authenticated) -> not 419; bad signature -> 400.

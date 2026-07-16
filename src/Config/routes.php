@@ -160,6 +160,7 @@ return static function (Router $router): void {
     // ── Orders & downloads (Req 8/10) ─────────────────────────────
     $router->get('/orders', [OrderController::class, 'index'], ['auth']);
     $router->get('/orders/{id}', [OrderController::class, 'show'], ['auth']);
+    $router->get('/orders/{id}/invoice', [OrderController::class, 'invoice'], ['auth']);
     $router->get('/account/library', [OrderController::class, 'library'], ['auth']);
 
     // Secure downloads: mint a signed link, then redeem + stream (Req 10).

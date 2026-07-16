@@ -547,6 +547,13 @@ final class App
             return new LogMailer($path);
         });
 
+        // Invoice document renderer (Req 8.4): real PDF in production, HTML in dev.
+        $c->singleton(\App\Infrastructure\Invoice\InvoiceRenderer::class, static function (): \App\Infrastructure\Invoice\InvoiceRenderer {
+            return (string) Config::get('invoice.format', 'pdf') === 'html'
+                ? new \App\Infrastructure\Invoice\HtmlInvoiceRenderer()
+                : new \App\Infrastructure\Invoice\PdfInvoiceRenderer();
+        });
+
         // Notification persistence (Req 13).
         $c->singleton(NotificationRepositoryInterface::class,
             static fn (Container $c) => new PdoNotificationRepository($conn($c)));

@@ -26,6 +26,11 @@ $items = $items ?? [];
 
   <?php if (($order['status'] ?? '') === 'paid' || ($order['status'] ?? '') === 'partially_refunded'): ?>
     <a href="/account/library"><button type="button">Go to downloads</button></a>
+    <?php if (!empty($order['invoice_key'])): ?>
+      <a href="/orders/<?= (int) $order['id'] ?>/invoice" target="_blank" rel="noopener">
+        <button type="button" class="ghost">Download invoice</button>
+      </a>
+    <?php endif; ?>
   <?php endif; ?>
   <p class="meta"><a href="/orders">&larr; All orders</a></p>
 </div>
