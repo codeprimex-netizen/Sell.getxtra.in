@@ -45,6 +45,12 @@ $check('POST /seller/products blocked without CSRF (419)', $kernel->handle($make
 // Home still fine (no DB access).
 $check('GET / still 200', $kernel->handle($make('GET', '/'))->status() === 200);
 
+// Phase 4 route wiring + guards (no DB access on these paths).
+$check('GET /account/wishlist requires auth', $redirectsToLogin($make('GET', '/account/wishlist')));
+$check('POST /wishlist/toggle blocked without CSRF (419)', $kernel->handle($make('POST', '/wishlist/toggle'))->status() === 419);
+$check('POST /product/1/reviews blocked without CSRF (419)', $kernel->handle($make('POST', '/product/1/reviews'))->status() === 419);
+$check('POST /admin/reviews/1/moderate blocked without CSRF (419)', $kernel->handle($make('POST', '/admin/reviews/1/moderate'))->status() === 419);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

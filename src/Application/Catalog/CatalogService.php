@@ -32,6 +32,43 @@ final class CatalogService
     }
 
     /**
+     * Related products for a product-detail page (Req 6.5).
+     *
+     * @param array<string,mixed> $product
+     * @return array<int, array<string,mixed>>
+     */
+    public function related(array $product, int $limit = 6): array
+    {
+        $productId = (int) $product['id'];
+        $categoryId = isset($product['category_id']) ? (int) $product['category_id'] : null;
+
+        return $this->products->related(
+            $productId,
+            $categoryId,
+            $this->products->tagIds($productId),
+            $limit,
+        );
+    }
+
+    /**
+     * Hydrate a set of product ids into full rows (for "recently viewed").
+     *
+     * @param array<int,int> $ids
+     * @return array<int, array<string,mixed>>
+     */
+    public function byIds(array $ids): array
+    {
+        $out = [];
+        foreach ($ids as $id) {
+            $product = $this->products->findById((int) $id);
+            if ($product !== null && $this->isPubliclyVisible($product)) {
+                $out[] = $product;
+            }
+        }
+        return $out;
+    }
+
+    /**
      * Full detail bundle for an approved product page, or null if not
      * publicly visible. Increments the view counter as a side effect.
      *

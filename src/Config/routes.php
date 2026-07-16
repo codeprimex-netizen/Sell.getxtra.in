@@ -13,8 +13,11 @@ use App\Http\Controllers\Web\Auth\TwoFactorController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\ReviewController;
+use App\Http\Controllers\Web\SearchController;
 use App\Http\Controllers\Web\Seller\ProductController;
 use App\Http\Controllers\Web\Seller\ProductVersionController;
+use App\Http\Controllers\Web\WishlistController;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
@@ -64,9 +67,18 @@ return static function (Router $router): void {
     $router->post('/account/sessions/revoke', [SessionController::class, 'revoke'], ['auth']);
     $router->post('/account/sessions/revoke-others', [SessionController::class, 'revokeOthers'], ['auth']);
 
-    // ── Public catalog (Req 4 / 6) ────────────────────────────────
+    // ── Public catalog + search (Req 4 / 6) ───────────────────────
     $router->get('/products', [CatalogController::class, 'index']);
+    $router->get('/search', [SearchController::class, 'index']);
     $router->get('/product/{slug}', [CatalogController::class, 'show']);
+
+    // ── Reviews & wishlist (Req 7) ────────────────────────────────
+    $router->post('/product/{id}/reviews', [ReviewController::class, 'store'], ['auth', 'throttle:20,1']);
+    $router->post('/reviews/{id}/reply', [ReviewController::class, 'reply'], ['auth']);
+    $router->post('/admin/reviews/{id}/moderate', [ReviewController::class, 'moderate'], ['auth', 'can:review.moderate']);
+
+    $router->get('/account/wishlist', [WishlistController::class, 'index'], ['auth']);
+    $router->post('/wishlist/toggle', [WishlistController::class, 'toggle']);
 
     // ── Seller product management (Req 4 / 5) ─────────────────────
     $router->get('/seller/products', [ProductController::class, 'index'], ['auth', 'can:product.create']);

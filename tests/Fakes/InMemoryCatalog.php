@@ -9,7 +9,11 @@ use App\Domain\Catalog\LicenseTierRepositoryInterface;
 use App\Domain\Catalog\ProductFileRepositoryInterface;
 use App\Domain\Catalog\ProductRepositoryInterface;
 use App\Domain\Catalog\ProductVersionRepositoryInterface;
+use App\Domain\Catalog\SearchCriteria;
+use App\Domain\Catalog\SearchResult;
 use App\Domain\Catalog\TagRepositoryInterface;
+use App\Domain\Review\ReviewRepositoryInterface;
+use App\Domain\Review\WishlistRepositoryInterface;
 
 /** In-memory catalog repositories for DB-free Phase 3 tests. */
 final class InMemoryProductRepository implements ProductRepositoryInterface
@@ -113,6 +117,51 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
     public function tagIds(int $productId): array
     {
         return $this->tags[$productId] ?? [];
+    }
+
+    public function search(SearchCriteria $c): SearchResult
+    {
+        $matches = array_filter($this->rows, function ($r) use ($c) {
+            if ($r['status'] !== 'approved' || ($r['scan_status'] ?? '') !== 'clean') {
+                return false;
+            }
+            if ($c->hasQuery() && stripos((string) $r['title'], $c->query) === false) {
+                return false;
+            }
+            if ($c->categoryId !== null && (int) ($r['category_id'] ?? 0) !== $c->categoryId) {
+                return false;
+            }
+            if ($c->priceMin !== null && (float) $r['base_price'] < $c->priceMin) {
+                return false;
+            }
+            if ($c->priceMax !== null && (float) $r['base_price'] > $c->priceMax) {
+                return false;
+            }
+            if ($c->minRating !== null && (float) ($r['avg_rating'] ?? 0) < $c->minRating) {
+                return false;
+            }
+            return true;
+        });
+
+        $items = array_values($matches);
+        $total = count($items);
+        $items = array_slice($items, $c->offset(), $c->perPage);
+
+        return new SearchResult($items, $total, $c->page, $c->perPage, 'mysql');
+    }
+
+    public function related(int $productId, ?int $categoryId, array $tagIds, int $limit = 6): array
+    {
+        return array_values(array_filter($this->rows, static function ($r) use ($productId, $categoryId) {
+            return (int) $r['id'] !== $productId
+                && $r['status'] === 'approved'
+                && ($categoryId === null || (int) ($r['category_id'] ?? 0) === $categoryId);
+        }));
+    }
+
+    public function updateRating(int $productId, float $avgRating, int $ratingCount): bool
+    {
+        return $this->update($productId, ['avg_rating' => $avgRating, 'rating_count' => $ratingCount]);
     }
 }
 
@@ -286,5 +335,119 @@ final class InMemoryProductFileRepository implements ProductFileRepositoryInterf
     {
         unset($this->rows[$id]);
         return true;
+    }
+}
+
+
+final class InMemoryReviewRepository implements ReviewRepositoryInterface
+{
+    /** @var array<int, array<string,mixed>> */
+    public array $rows = [];
+    private int $seq = 0;
+
+    public function create(array $data): int
+    {
+        $id = ++$this->seq;
+        $data['id'] = $id;
+        $this->rows[$id] = $data;
+        return $id;
+    }
+
+    public function findById(int $id): ?array
+    {
+        return $this->rows[$id] ?? null;
+    }
+
+    public function findByUserAndProduct(int $userId, int $productId): ?array
+    {
+        foreach ($this->rows as $r) {
+            if ((int) $r['user_id'] === $userId && (int) $r['product_id'] === $productId) {
+                return $r;
+            }
+        }
+        return null;
+    }
+
+    public function publishedForProduct(int $productId, int $limit = 50, int $offset = 0): array
+    {
+        return array_values(array_filter(
+            $this->rows,
+            static fn ($r) => (int) $r['product_id'] === $productId && $r['status'] === 'published'
+        ));
+    }
+
+    public function pending(int $limit = 50): array
+    {
+        return array_values(array_filter($this->rows, static fn ($r) => $r['status'] === 'pending'));
+    }
+
+    public function setStatus(int $id, string $status): bool
+    {
+        if (!isset($this->rows[$id])) {
+            return false;
+        }
+        $this->rows[$id]['status'] = $status;
+        return true;
+    }
+
+    public function setSellerReply(int $id, string $reply): bool
+    {
+        if (!isset($this->rows[$id])) {
+            return false;
+        }
+        $this->rows[$id]['seller_reply'] = $reply;
+        return true;
+    }
+
+    public function delete(int $id): bool
+    {
+        unset($this->rows[$id]);
+        return true;
+    }
+
+    public function aggregate(int $productId): array
+    {
+        $ratings = [];
+        foreach ($this->rows as $r) {
+            if ((int) $r['product_id'] === $productId && $r['status'] === 'published') {
+                $ratings[] = (int) $r['rating'];
+            }
+        }
+        $count = count($ratings);
+        return [
+            'avg'   => $count > 0 ? array_sum($ratings) / $count : 0.0,
+            'count' => $count,
+        ];
+    }
+}
+
+final class InMemoryWishlistRepository implements WishlistRepositoryInterface
+{
+    /** @var array<int, array<int,int>> userId => productIds */
+    public array $items = [];
+
+    public function add(int $userId, int $productId): void
+    {
+        $this->items[$userId][$productId] = $productId;
+    }
+
+    public function remove(int $userId, int $productId): void
+    {
+        unset($this->items[$userId][$productId]);
+    }
+
+    public function has(int $userId, int $productId): bool
+    {
+        return isset($this->items[$userId][$productId]);
+    }
+
+    public function productIds(int $userId): array
+    {
+        return array_values($this->items[$userId] ?? []);
+    }
+
+    public function forUser(int $userId): array
+    {
+        return array_map(static fn ($id) => ['id' => $id], $this->productIds($userId));
     }
 }

@@ -51,6 +51,15 @@ use App\Infrastructure\Security\AntivirusScanner;
 use App\Infrastructure\Security\SignatureScanner;
 use App\Infrastructure\Storage\LocalStorage;
 use App\Infrastructure\Storage\StorageManager;
+use App\Domain\Commerce\PurchaseCheckerInterface;
+use App\Domain\Review\ReviewRepositoryInterface;
+use App\Domain\Review\WishlistRepositoryInterface;
+use App\Infrastructure\Commerce\NullPurchaseChecker;
+use App\Infrastructure\Persistence\PdoReviewRepository;
+use App\Infrastructure\Persistence\PdoWishlistRepository;
+use App\Infrastructure\Search\MeilisearchIndex;
+use App\Infrastructure\Search\NullSearchIndex;
+use App\Infrastructure\Search\SearchIndex;
 
 /**
  * Application bootstrapper.
@@ -168,6 +177,22 @@ final class App
 
         $c->singleton(QueueInterface::class, static fn (Container $c): QueueInterface =>
             new SyncQueue($c->get(Logger::class)));
+
+        // Reviews & wishlist (Phase 4).
+        $c->singleton(ReviewRepositoryInterface::class, static fn (Container $c) => new PdoReviewRepository($conn($c)));
+        $c->singleton(WishlistRepositoryInterface::class, static fn (Container $c) => new PdoWishlistRepository($conn($c)));
+        $c->singleton(PurchaseCheckerInterface::class, static fn (): PurchaseCheckerInterface => new NullPurchaseChecker());
+
+        // Search engine: use Meilisearch when configured, else the MySQL
+        // FULLTEXT fallback via NullSearchIndex (Req 6.1 / 6.4).
+        $c->singleton(SearchIndex::class, static function (): SearchIndex {
+            $driver = (string) Config::get('search.driver', 'mysql');
+            $host = (string) Config::get('search.host', '');
+            if ($driver === 'meilisearch' && $host !== '') {
+                return new MeilisearchIndex($host, (string) Config::get('search.key', ''));
+            }
+            return new NullSearchIndex();
+        });
     }
 
     private function registerHttp(): void

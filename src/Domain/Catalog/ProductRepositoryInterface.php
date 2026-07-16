@@ -58,4 +58,21 @@ interface ProductRepositoryInterface
 
     /** @return array<int,int> tag ids for a product */
     public function tagIds(int $productId): array;
+
+    /**
+     * Full-text + faceted search over approved products (MySQL fallback path,
+     * Req 6.1/6.2/6.4). Returns a paginated SearchResult.
+     */
+    public function search(SearchCriteria $criteria): SearchResult;
+
+    /**
+     * Related approved products by category/tags, excluding the given product.
+     *
+     * @param array<int,int> $tagIds
+     * @return array<int, array<string,mixed>>
+     */
+    public function related(int $productId, ?int $categoryId, array $tagIds, int $limit = 6): array;
+
+    /** Persist the denormalized rating aggregate (Req 7.5). */
+    public function updateRating(int $productId, float $avgRating, int $ratingCount): bool;
 }
