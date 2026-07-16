@@ -1,0 +1,89 @@
+name: CI
+
+# Quality gate for every push and pull request (Req 23.1):
+# syntax lint -> code style (PHPCS) -> static analysis (PHPStan) -> tests ->
+# container build. The dependency/SAST security scan runs in security.yml.
+# Branch protection (see docs/BRANCH_PROTECTION.md) requires these checks green.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    name: Syntax lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+      - name: php -l all sources
+        run: |
+          find src public bin database resources tests -name '*.php' -print0 \
+            | xargs -0 -n1 php -l > /dev/null
+
+  code-style:
+    name: Code style (PHPCS)
+    runs-on: ubuntu-latest
+    # Advisory while ratcheting PSR-12 across the codebase; flip to required
+    # (remove continue-on-error) once the baseline is clean.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer run lint
+
+  static-analysis:
+    name: Static analysis (PHPStan)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer run analyse
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php: ['8.2', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          extensions: pdo, mbstring, intl
+      - name: Run test suites
+        run: php bin/run-tests.php
+
+  build:
+    name: Container build
+    runs-on: ubuntu-latest
+    needs: [syntax, test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build -f deploy/Dockerfile -t sell-getxtra:${{ github.sha }} .

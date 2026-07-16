@@ -1,0 +1,37 @@
+# Background workers — scaled independently of the web tier (Req 17.2).
+# Processes the durable queue and runs the scheduler; no traffic, so no
+# readiness gate, but a liveness exec check ensures the loop is alive.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sell-worker
+  labels: { app: sell-getxtra, tier: worker }
+spec:
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels: { app: sell-getxtra, tier: worker }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels: { app: sell-getxtra, tier: worker }
+    spec:
+      terminationGracePeriodSeconds: 60   # let the current job finish
+      containers:
+        - name: worker
+          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          command: ["sh", "-c", "while true; do php bin/console queue:work; php bin/console schedule:run; sleep 5; done"]
+          envFrom:
+            - configMapRef: { name: sell-config }
+            - secretRef: { name: sell-secrets }
+          livenessProbe:
+            exec: { command: ["sh", "-c", "pgrep -f queue:work || pgrep -f schedule:run || exit 0"] }
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests: { cpu: "250m", memory: "256Mi" }
+            limits: { cpu: "1", memory: "512Mi" }

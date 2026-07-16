@@ -133,10 +133,10 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 13.7 Backup/restore + **DR** drill (RPO ≤ 15m, RTO ≤ 1h) _(Req 17.5, 22.2)_ **[M]**
 
 ## Phase 14 — CI/CD & Quality Gates
-- [ ] 14.1 CI: lint (PHPCS) → static analysis (PHPStan/Psalm) → tests → build → security scan _(Req 23.1)_ **[M]**
-- [ ] 14.2 Branch protection: required checks + review _(Req 23.2)_ **[M]**
-- [ ] 14.3 CD: build Docker image → deploy staging → approval → production; gated migrations _(Req 23.3)_ **[M]**
-- [ ] 14.4 Zero/low-downtime rolling deploy + rollback _(Req 23.4)_ **[M]**
+- [x] 14.1 CI: lint (PHPCS) → static analysis (PHPStan/Psalm) → tests → build → security scan _(Req 23.1)_ **[M]**
+- [x] 14.2 Branch protection: required checks + review _(Req 23.2)_ **[M]**
+- [x] 14.3 CD: build Docker image → deploy staging → approval → production; gated migrations _(Req 23.3)_ **[M]**
+- [x] 14.4 Zero/low-downtime rolling deploy + rollback _(Req 23.4)_ **[M]**
 
 ## Phase 15 — Testing Strategy
 - [ ] 15.1 Unit tests (PHPUnit) for domain/services + coverage threshold on critical modules _(Req 24.1)_ **[M]**

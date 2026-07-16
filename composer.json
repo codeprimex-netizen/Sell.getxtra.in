@@ -31,9 +31,17 @@
         "migrate": "php bin/console migrate",
         "seed": "php bin/console seed",
         "serve": "php -S 127.0.0.1:8000 -t public",
-        "test": "phpunit",
-        "analyse": "phpstan analyse",
-        "lint": "phpcs"
+        "test": "php bin/run-tests.php",
+        "test:unit": "phpunit",
+        "analyse": "phpstan analyse --no-progress",
+        "lint": "phpcs",
+        "lint:fix": "phpcbf",
+        "syntax": "find src public bin database resources tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null",
+        "ci": [
+            "@syntax",
+            "@lint",
+            "@test"
+        ]
     },
     "config": {
         "optimize-autoloader": true,

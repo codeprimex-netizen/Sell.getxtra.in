@@ -1,0 +1,12 @@
+# Code ownership for review routing (Req 23.2).
+# PRs touching these paths require review from the listed owners.
+
+*                       @codeprimex-netizen
+
+# Security-sensitive areas require extra scrutiny.
+/src/Http/Middleware/   @codeprimex-netizen
+/src/Application/Security/ @codeprimex-netizen
+/src/Application/Privacy/  @codeprimex-netizen
+/database/migrations/   @codeprimex-netizen
+/.github/workflows/     @codeprimex-netizen
+/deploy/                @codeprimex-netizen

@@ -1,0 +1,18 @@
+# Static analysis configuration (Req 23.1).
+#
+# Introduced against an existing codebase using the ratchet pattern: analysis
+# runs at a modest level with a baseline of pre-existing findings, and the
+# level is raised over time. Regenerate the baseline after clearing findings:
+#   vendor/bin/phpstan analyse --generate-baseline
+parameters:
+    level: 5
+    paths:
+        - src
+        - bin
+    bootstrapFiles:
+        - src/Support/helpers.php
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: false
+    # Uncomment once generated in CI to ignore legacy findings:
+    # includes:
+    #     - phpstan-baseline.neon
