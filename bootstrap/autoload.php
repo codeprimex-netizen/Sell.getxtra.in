@@ -17,6 +17,24 @@ declare(strict_types=1);
 
 $appBasePath = defined('APP_BASE_PATH') ? APP_BASE_PATH : dirname(__DIR__);
 
+// Under a non-CLI SAPI (e.g. the web installer running migrations/seeders via
+// php-fpm) the CLI stream constants do not exist. Some console-oriented classes
+// (MigrationRunner, Seeder) write progress with fwrite(STDOUT, ...); without
+// these constants that is a fatal "Undefined constant STDOUT". Point them at a
+// discarded in-memory stream so such writes are harmless and never leak into
+// the HTML response. In CLI, PHP already defines them, so this is skipped.
+if (PHP_SAPI !== 'cli') {
+    if (!defined('STDOUT')) {
+        define('STDOUT', fopen('php://temp', 'wb'));
+    }
+    if (!defined('STDERR')) {
+        define('STDERR', fopen('php://temp', 'wb'));
+    }
+    if (!defined('STDIN')) {
+        define('STDIN', fopen('php://temp', 'rb'));
+    }
+}
+
 $composerAutoload = $appBasePath . '/vendor/autoload.php';
 if (is_file($composerAutoload)) {
     require $composerAutoload;

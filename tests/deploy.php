@@ -86,6 +86,12 @@ $check('root .htaccess blocks app internals (src/storage/vendor/bootstrap)',
     str_contains($ht, 'bootstrap') && str_contains($ht, 'storage') && str_contains($ht, 'vendor') && str_contains($ht, 'src'));
 $check('root .htaccess routes to the front controller', str_contains($ht, 'RewriteRule ^ index.php'));
 
+// ── Non-CLI stream constants (web installer runs migrate/seed) ─────
+$bootSrc = (string) @file_get_contents($boot);
+$check('bootstrap defines STDOUT/STDERR for non-CLI SAPI (web installer safe)',
+    str_contains($bootSrc, "PHP_SAPI !== 'cli'") && str_contains($bootSrc, "define('STDOUT'")
+    && str_contains($bootSrc, "php://temp"));
+
 // ── Front controller wiring ────────────────────────────────────────
 $pubIndex = (string) @file_get_contents($root . '/public/index.php');
 $check('public/index.php uses the bootstrap autoloader', str_contains($pubIndex, "/bootstrap/autoload.php"));
