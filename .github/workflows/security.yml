@@ -1,0 +1,72 @@
+name: Security
+
+# Continuous security scanning (Req 14.9 / 23.1): dependency vulnerabilities,
+# static analysis (SAST), and the security-focused test suites. The broader
+# build/test pipeline is defined separately in Phase 14.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan to catch newly disclosed dependency advisories.
+    - cron: '0 3 * * 1'
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - name: Validate composer manifest
+        run: composer validate --strict
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Audit dependencies for known vulnerabilities
+        run: composer audit --no-interaction
+
+  static-analysis:
+    name: SAST + lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Lint all PHP sources
+        run: |
+          find src public bin database resources tests -name '*.php' -print0 \
+            | xargs -0 -n1 php -l > /dev/null
+      - name: Security static-analysis guard
+        run: php tests/security.php
+
+  security-tests:
+    name: Security & compliance tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+      - name: Run security & compliance suite
+        run: php tests/phase11.php

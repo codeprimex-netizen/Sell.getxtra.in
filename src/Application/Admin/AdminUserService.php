@@ -6,6 +6,7 @@ namespace App\Application\Admin;
 
 use App\Application\Audit\AuditLogger;
 use App\Application\Identity\AccessControl;
+use App\Application\Security\SecurityEventService;
 use App\Domain\Admin\AdminUserRepositoryInterface;
 use App\Domain\Identity\RoleRepositoryInterface;
 use App\Domain\Identity\UserRepositoryInterface;
@@ -26,6 +27,7 @@ final class AdminUserService
         private RoleRepositoryInterface $roles,
         private AccessControl $access,
         private AuditLogger $audit,
+        private ?SecurityEventService $security = null,
     ) {
     }
 
@@ -61,6 +63,7 @@ final class AdminUserService
         $this->roles->assignRoleByName($userId, $role);
         $this->access->forget($userId);
         $this->audit->log('user.assign_role', $actorId, 'user', $userId, ['role' => $role], $ip);
+        $this->security?->privilegeChanged($actorId, $userId, $role, 'granted', $ip);
     }
 
     /** @throws AdminException */
@@ -72,6 +75,7 @@ final class AdminUserService
             $this->roles->removeRole($userId, (int) $roleRow['id']);
             $this->access->forget($userId);
             $this->audit->log('user.remove_role', $actorId, 'user', $userId, ['role' => $role], $ip);
+            $this->security?->privilegeChanged($actorId, $userId, $role, 'revoked', $ip);
         }
     }
 

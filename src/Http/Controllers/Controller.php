@@ -30,6 +30,7 @@ abstract class Controller
             'app_name'      => (string) Config::get('app.name', 'Sell.getxtra.in'),
             'auth_user'     => $request->attribute('auth_user'),
             'csrf_token'    => $session?->csrfToken() ?? '',
+            'csp_nonce'     => (string) ($request->attribute('csp_nonce') ?? ''),
             'flash_success' => $session?->getFlash('success'),
             'flash_error'   => $session?->getFlash('error'),
             'errors'        => $data['errors'] ?? [],

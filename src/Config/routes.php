@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Account\DashboardController;
 use App\Http\Controllers\Web\Account\NotificationController;
+use App\Http\Controllers\Web\Account\PrivacyController;
 use App\Http\Controllers\Web\Account\SessionController;
 use App\Http\Controllers\Web\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
@@ -101,6 +102,13 @@ return static function (Router $router): void {
 
     // One-click email unsubscribe via signed token — public (Req 13.3).
     $router->get('/unsubscribe/{token}', [UnsubscribeController::class, 'unsubscribe']);
+
+    // ── Privacy centre: consent, export, erasure (Req 14.8) ───────
+    $router->get('/account/privacy', [PrivacyController::class, 'index'], ['auth']);
+    $router->post('/account/privacy/consent', [PrivacyController::class, 'updateConsent'], ['auth']);
+    $router->post('/account/privacy/export', [PrivacyController::class, 'requestExport'], ['auth', 'throttle:5,1']);
+    $router->post('/account/privacy/erasure', [PrivacyController::class, 'requestErasure'], ['auth', 'throttle:5,1']);
+    $router->get('/account/privacy/export/{token}', [PrivacyController::class, 'download'], ['auth']);
 
     // ── Developer: API key management (Req 19.2) ──────────────────
     $router->get('/account/api-keys', [AccountApiKeyController::class, 'index'], ['auth']);

@@ -141,6 +141,7 @@ final class App
         $this->registerCommerceServices();
         $this->registerAdminServices();
         $this->registerSellerServices();
+        $this->registerPrivacyServices();
         $this->registerQueueServices();
         $this->registerApiServices();
         $this->registerHttp();
@@ -168,6 +169,24 @@ final class App
             new RateLimiter($basePath . '/storage/cache/ratelimit'));
 
         $c->singleton(SessionStore::class, static fn (): SessionStore => new NativeSessionStore());
+
+        // Secrets provider (Req 14.6): file/Vault-backed in production, env in dev.
+        $c->singleton(\App\Infrastructure\Security\Secrets\SecretsManager::class, static function (): \App\Infrastructure\Security\Secrets\SecretsManager {
+            $env = new \App\Infrastructure\Security\Secrets\EnvSecretProvider();
+            $driver = (string) Config::get('secrets.driver', 'env');
+            $path = (string) Config::get('secrets.path', '');
+
+            $provider = match ($driver) {
+                'file'  => new \App\Infrastructure\Security\Secrets\FileSecretProvider($path),
+                'chain' => new \App\Infrastructure\Security\Secrets\ChainSecretProvider(
+                    new \App\Infrastructure\Security\Secrets\FileSecretProvider($path),
+                    $env,
+                ),
+                default => $env,
+            };
+
+            return new \App\Infrastructure\Security\Secrets\SecretsManager($provider);
+        });
     }
 
     /**
@@ -338,6 +357,21 @@ final class App
     }
 
     /**
+     * Bind GDPR/DPDP repositories (Phase 11). Consent and data-privacy
+     * application services autowire from these.
+     */
+    private function registerPrivacyServices(): void
+    {
+        $c = $this->container;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(\App\Domain\Privacy\ConsentRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoConsentRepository($conn($c)));
+        $c->singleton(\App\Domain\Privacy\DataRequestRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoDataRequestRepository($conn($c)));
+    }
+
+    /**
      * Bind the async pipeline (Phase 9): mailer, notification repositories,
      * the job registry + queue driver + dispatcher/worker, and the scheduler
      * with its recurring tasks. Application services (NotificationService,
@@ -371,6 +405,8 @@ final class App
             $registry->register('notification.push', static fn () => $c->get(SendNotificationHandler::class));
             $registry->register('invoice.generate', static fn () => $c->get(GenerateInvoiceHandler::class));
             $registry->register('webhook.dispatch', static fn () => $c->get(DispatchWebhookHandler::class));
+            $registry->register('privacy.export', static fn () => $c->get(\App\Jobs\Handlers\ProcessDataExportHandler::class));
+            $registry->register('privacy.erasure', static fn () => $c->get(\App\Jobs\Handlers\ProcessErasureHandler::class));
             return $registry;
         });
 
@@ -407,6 +443,12 @@ final class App
                     $items = $orders->items((int) $order['id']);
                     $ledger->clearEarning((int) $order['id'], $items, (string) $order['currency']);
                 }
+            });
+
+            // Purge expired data-export artifacts (Req 14.8 retention).
+            $scheduler->register('privacy.retention', 1440, static function () use ($c): void {
+                $ttl = (int) Config::get('privacy.export_ttl_days', 7);
+                $c->get(\App\Application\Privacy\DataPrivacyService::class)->purgeExpiredExports($ttl);
             });
 
             return $scheduler;
@@ -454,6 +496,7 @@ final class App
                 globalMiddleware: [
                     RequestId::class,
                     SecurityHeaders::class,
+                    \App\Http\Middleware\ThrottleGlobal::class,
                     StartSession::class,
                     VerifyCsrf::class,
                 ],

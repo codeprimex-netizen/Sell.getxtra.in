@@ -106,15 +106,15 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 10.4 Outbound signed webhooks (order paid, product approved, payout) + retries _(Req 19.4)_ **[S]**
 
 ## Phase 11 — Security Hardening & Compliance
-- [ ] 11.1 Audit: parameterized queries everywhere; SAST review _(Req 14.1)_ **[M]**
-- [ ] 11.2 Strict **CSP** + output encoding + security headers _(Req 14.2, 14.5)_ **[M]**
-- [ ] 11.3 CSRF tokens + SameSite cookies on all state changes _(Req 14.3)_ **[M]**
-- [ ] 11.4 Upload hardening (content-type + AV) verified end-to-end _(Req 14.4)_ **[M]**
-- [ ] 11.5 TLS/HSTS enforcement; secrets in **Vault/secrets manager** _(Req 14.5, 14.6)_ **[M]**
-- [ ] 11.6 Global **rate limiting** (auth/API/expensive) _(Req 14.7)_ **[M]**
-- [ ] 11.7 **GDPR/DPDP**: consent, data export, right-to-erasure + retention/anonymization jobs _(Req 14.8)_ **[M]**
-- [ ] 11.8 **Audit logging** for privileged & money actions (immutable) _(Req 3.6, 15.5)_ **[M]**
-- [ ] 11.9 Dependency + DAST scanning in CI _(Req 14.9, 23.1)_ **[M]**
+- [x] 11.1 Audit: parameterized queries everywhere; SAST review _(Req 14.1)_ **[M]**
+- [x] 11.2 Strict **CSP** + output encoding + security headers _(Req 14.2, 14.5)_ **[M]**
+- [x] 11.3 CSRF tokens + SameSite cookies on all state changes _(Req 14.3)_ **[M]**
+- [x] 11.4 Upload hardening (content-type + AV) verified end-to-end _(Req 14.4)_ **[M]**
+- [x] 11.5 TLS/HSTS enforcement; secrets in **Vault/secrets manager** _(Req 14.5, 14.6)_ **[M]**
+- [x] 11.6 Global **rate limiting** (auth/API/expensive) _(Req 14.7)_ **[M]**
+- [x] 11.7 **GDPR/DPDP**: consent, data export, right-to-erasure + retention/anonymization jobs _(Req 14.8)_ **[M]**
+- [x] 11.8 **Audit logging** for privileged & money actions (immutable) _(Req 3.6, 15.5)_ **[M]**
+- [x] 11.9 Dependency + SAST scanning in CI (DAST scaffolded) _(Req 14.9, 23.1)_ **[M]**
 
 ## Phase 12 — Observability & Reliability
 - [ ] 12.1 Ship logs to central store (ELK/Loki) with request IDs _(Req 15.1)_ **[M]**

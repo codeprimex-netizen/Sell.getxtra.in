@@ -35,7 +35,7 @@ $card = static function (array $p) use ($stars): string {
         . '</div></div></a>';
 };
 ?>
-<script type="application/ld+json"><?= $jsonld ?? '{}' ?></script>
+<script type="application/ld+json" nonce="<?= e($csp_nonce ?? '') ?>"><?= $jsonld ?? '{}' ?></script>
 
 <div class="card wide">
   <h1><?= e((string) $product['title']) ?></h1>

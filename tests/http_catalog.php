@@ -99,6 +99,16 @@ $check('GET /api/v1/webhooks without key is 401', $kernel->handle($make('GET', '
 $check('POST /api/v1/webhooks without key is 401 (CSRF-exempt)', $kernel->handle($make('POST', '/api/v1/webhooks'))->status() === 401);
 $check('GET /account/api-keys requires auth', $redirectsToLogin($make('GET', '/account/api-keys')));
 
+// Phase 11: privacy centre requires auth; hardened response headers on public pages.
+$check('GET /account/privacy requires auth', $redirectsToLogin($make('GET', '/account/privacy')));
+$check('POST /account/privacy/export blocked without CSRF (419)', $kernel->handle($make('POST', '/account/privacy/export'))->status() === 419);
+$check('GET /account/privacy/export/{token} requires auth', $redirectsToLogin($make('GET', '/account/privacy/export/sometoken')));
+
+$home = $kernel->handle($make('GET', '/'));
+$csp = $home->headers()['Content-Security-Policy'] ?? '';
+$check('home response sets a nonce-based CSP', str_contains($csp, "script-src 'self' 'nonce-") && str_contains($csp, "object-src 'none'"));
+$check('home response sets HSTS', str_contains($home->headers()['Strict-Transport-Security'] ?? '', 'max-age='));
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

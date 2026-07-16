@@ -75,6 +75,15 @@ final class Config
             ],
             'security' => [
                 'rate_limit_enabled' => (bool) Env::get('RATE_LIMIT_ENABLED', true),
+                'global_rate_limit'  => (int) Env::get('GLOBAL_RATE_LIMIT', 600),  // requests/min/IP
+            ],
+            'secrets' => [
+                'driver' => Env::get('SECRETS_DRIVER', 'env'),   // env | file | chain
+                'path'   => Env::get('SECRETS_PATH', ''),         // JSON file (Vault Agent / mounted secret)
+            ],
+            'privacy' => [
+                'export_ttl_days'  => (int) Env::get('PRIVACY_EXPORT_TTL_DAYS', 7),
+                'erasure_grace_days' => (int) Env::get('PRIVACY_ERASURE_GRACE_DAYS', 0),
             ],
             'commerce' => [
                 'currency'          => Env::get('COMMERCE_CURRENCY', 'INR'),
