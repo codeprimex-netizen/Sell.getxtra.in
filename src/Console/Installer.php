@@ -372,7 +372,18 @@ final class Installer
      */
     private function applyRuntimeConfig(array $config, string $appKey): void
     {
+        // CRITICAL: boot Config BEFORE overriding it. Config::set() does not
+        // trigger boot(), and a later lazy boot() (e.g. from ConnectionManager
+        // reading db.password) replaces the entire config array — which would
+        // silently wipe the overrides below and connect with an empty password
+        // ("Access denied ... using password: NO"). Loading the freshly-written
+        // .env first also makes non-DB config (app.url, etc.) correct.
+        Env::load($this->basePath . '/.env');
+        Config::boot();
+
         $db = (array) ($config['db'] ?? []);
+        // Authoritative in-memory overrides (no .env round-trip for the creds
+        // that just passed the live connection test).
         Config::set('db.host', (string) ($db['host'] ?? '127.0.0.1'));
         Config::set('db.port', (int) ($db['port'] ?? 3306));
         Config::set('db.database', (string) ($db['database'] ?? 'getxtrain_Codegetxdata'));

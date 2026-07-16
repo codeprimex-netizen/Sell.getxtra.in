@@ -112,6 +112,27 @@ $lockData = json_decode((string) file_get_contents($installer->lockFile()), true
 $check('lock file is valid JSON with metadata', is_array($lockData) && ($lockData['version'] ?? '') === '1.0.0' && ($lockData['admin_email'] ?? '') === 'admin@code.getxtra.in');
 $check('run() refuses when already installed (no --force)', $threw(static fn () => $installer->run(['db' => [], 'app' => [], 'admin' => []])));
 
+// Regression (the "using password: NO" bug): applyRuntimeConfig must force a
+// Config boot BEFORE setting overrides, otherwise a later lazy Config::boot()
+// (triggered by ConnectionManager reading db.password) wipes the overrides and
+// the install connects with an empty password. Verified in a fresh subprocess
+// so Config's static state is pristine.
+$probeFile = $base . '/probe_cfg.php';
+file_put_contents(
+    $probeFile,
+    "<?php\n"
+    . 'require ' . var_export($root . '/vendor/autoload.php', true) . ";\n"
+    . '$i = new App\\Console\\Installer(' . var_export($root, true) . ");\n"
+    . "\$m = new ReflectionMethod(\$i, 'applyRuntimeConfig');\n"
+    . "\$m->setAccessible(true);\n"
+    . "\$m->invoke(\$i, ['db' => ['host' => 'h', 'port' => 3306, 'database' => 'd', 'username' => 'u', 'password' => 'S3cret#Pw']], 'base64:x');\n"
+    . "echo App\\Config\\Config::get('db.password') === 'S3cret#Pw' ? 'OK' : ('BAD:' . App\\Config\\Config::get('db.password'));\n",
+);
+$probeOut = [];
+exec(escapeshellarg(PHP_BINARY) . ' ' . escapeshellarg($probeFile) . ' 2>&1', $probeOut);
+$check('applyRuntimeConfig keeps db.password after a lazy Config boot', trim(implode("\n", $probeOut)) === 'OK', implode(' ', $probeOut));
+@unlink($probeFile);
+
 // Cleanup.
 @unlink($base . '/.env');
 @unlink($base . '/.env.example');
