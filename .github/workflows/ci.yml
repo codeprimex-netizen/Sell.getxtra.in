@@ -79,6 +79,23 @@ jobs:
       - name: Run test suites
         run: php bin/run-tests.php
 
+  phpunit:
+    name: PHPUnit + coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: pcov
+          extensions: pdo, mbstring, intl
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: PHPUnit (unit + integration + e2e + security) with coverage
+        run: vendor/bin/phpunit
+      - name: Enforce critical-module coverage threshold
+        run: php bin/coverage-check.php build/coverage/clover.xml 75
+
   build:
     name: Container build
     runs-on: ubuntu-latest

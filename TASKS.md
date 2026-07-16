@@ -139,10 +139,10 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 14.4 Zero/low-downtime rolling deploy + rollback _(Req 23.4)_ **[M]**
 
 ## Phase 15 — Testing Strategy
-- [ ] 15.1 Unit tests (PHPUnit) for domain/services + coverage threshold on critical modules _(Req 24.1)_ **[M]**
-- [ ] 15.2 Integration tests (DB/cache/gateway sandboxes) _(Req 24.2)_ **[M]**
-- [ ] 15.3 E2E core flows (register → buy → download) _(Req 24.2)_ **[M]**
-- [ ] 15.4 Security tests (SQLi/XSS/CSRF/authz) _(Req 24.3)_ **[M]**
+- [x] 15.1 Unit tests (PHPUnit) for domain/services + coverage threshold on critical modules _(Req 24.1)_ **[M]**
+- [x] 15.2 Integration tests (DB/cache/gateway sandboxes) _(Req 24.2)_ **[M]**
+- [x] 15.3 E2E core flows (register → buy → download) _(Req 24.2)_ **[M]**
+- [x] 15.4 Security tests (SQLi/XSS/CSRF/authz) _(Req 24.3)_ **[M]**
 
 ## Phase 16 — Launch & Post-Launch _(Ongoing)_
 - [ ] 16.1 Beta with limited verified sellers + feedback loop **[M]**
