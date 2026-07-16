@@ -72,6 +72,34 @@ final class LedgerService
     }
 
     /**
+     * Post an affiliate commission for an order (Req 20.2). The commission is
+     * funded from the platform's cleared commission (debit platform) and
+     * credited to the affiliate as pending until the refund window closes.
+     * Idempotent: an "affiliate" entry is written per order, so re-runs no-op.
+     *
+     * @return bool true if posted now, false if already posted
+     */
+    public function recordAffiliateCommission(int $orderId, int $affiliateUserId, Money $commission, string $currency): bool
+    {
+        if (!$commission->isPositive()) {
+            return false;
+        }
+        if ($this->ledger->entriesForRef('affiliate', $orderId) !== []) {
+            return false;
+        }
+
+        $memo = 'Affiliate commission (order #' . $orderId . ')';
+        $platform = $this->ledger->account('platform', null, $currency);
+        $affiliate = $this->ledger->account('affiliate', $affiliateUserId, $currency);
+
+        // Move value from the platform's cut to the affiliate (pending).
+        $this->ledger->post($platform, 'debit', 'cleared', $commission, 'affiliate', $orderId, $memo);
+        $this->ledger->post($affiliate, 'credit', 'pending', $commission, 'affiliate', $orderId, $memo);
+
+        return true;
+    }
+
+    /**
      * Reverse a fraction (0..1) of an order's ledger entries on refund.
      *
      * @param array<int, array<string,mixed>> $items

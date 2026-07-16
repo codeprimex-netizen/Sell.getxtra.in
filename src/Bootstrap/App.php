@@ -385,6 +385,13 @@ final class App
         $c->singleton(LedgerRepositoryInterface::class, static fn (Container $c) => new PdoLedgerRepository($conn($c)));
         $c->singleton(RefundRepositoryInterface::class, static fn (Container $c) => new PdoRefundRepository($conn($c)));
 
+        // Affiliate / referral program (Req 20.2). AffiliateService autowires
+        // from these + LedgerService; PaymentService gets it as an optional dep.
+        $c->singleton(\App\Domain\Affiliate\AffiliateRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoAffiliateRepository($conn($c)));
+        $c->singleton(\App\Domain\Affiliate\ReferralRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoReferralRepository($conn($c)));
+
         // Payment gateways: offline (dev) always available; real gateways when configured.
         $c->singleton(PaymentGatewayRegistry::class, static function (): PaymentGatewayRegistry {
             $registry = new PaymentGatewayRegistry();

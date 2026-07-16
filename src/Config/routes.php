@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Account\DashboardController;
 use App\Http\Controllers\Web\Account\NotificationController;
+use App\Http\Controllers\Web\Account\AffiliateController;
 use App\Http\Controllers\Web\Account\PrivacyController;
 use App\Http\Controllers\Web\Account\SessionController;
+use App\Http\Controllers\Web\ReferralController;
 use App\Http\Controllers\Web\Admin\CategoryController as AdminCategoryController;
 use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
 use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
@@ -112,6 +114,11 @@ return static function (Router $router): void {
 
     // One-click email unsubscribe via signed token — public (Req 13.3).
     $router->get('/unsubscribe/{token}', [UnsubscribeController::class, 'unsubscribe']);
+
+    // ── Affiliate / referral program (Req 20.2) ───────────────────
+    $router->get('/r/{code}', [ReferralController::class, 'land'], ['throttle:60,1']);
+    $router->get('/account/affiliate', [AffiliateController::class, 'index'], ['auth']);
+    $router->post('/account/affiliate/enroll', [AffiliateController::class, 'enroll'], ['auth', 'throttle:10,1']);
 
     // ── Privacy centre: consent, export, erasure (Req 14.8) ───────
     $router->get('/account/privacy', [PrivacyController::class, 'index'], ['auth']);

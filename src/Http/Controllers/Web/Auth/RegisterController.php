@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web\Auth;
 
+use App\Application\Affiliate\AffiliateService;
 use App\Application\Identity\AuthException;
 use App\Application\Identity\RegistrationService;
 use App\Config\Config;
@@ -18,8 +19,10 @@ use App\Support\Validation\Validator;
  */
 final class RegisterController extends Controller
 {
-    public function __construct(private RegistrationService $registration)
-    {
+    public function __construct(
+        private RegistrationService $registration,
+        private ?AffiliateService $affiliates = null,
+    ) {
     }
 
     public function show(Request $request): Response
@@ -55,6 +58,12 @@ final class RegisterController extends Controller
                 'errors' => ['email' => [$e->getMessage()]],
                 'old'    => ['name' => $data['name'] ?? '', 'email' => $data['email'] ?? ''],
             ], 422);
+        }
+
+        // Attribute an affiliate referral if the visitor arrived via a link (Req 20.2).
+        $vid = (string) ($request->cookie('gx_vid') ?? '');
+        if ($vid !== '') {
+            $this->affiliates?->attributeSignup($vid, (int) $result['user_id']);
         }
 
         $message = 'Account created. Please check your email to verify your address.';

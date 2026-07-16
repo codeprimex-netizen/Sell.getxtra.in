@@ -134,6 +134,11 @@ $check('layout honours ?lang=hi (localization end-to-end)', str_contains($kernel
 $evt = $kernel->handle($make('POST', '/api/v1/events'));
 $check('POST /api/v1/events is CSRF-exempt and validates (422)', $evt->status() === 422);
 
+// Affiliate / referral program (Req 20.2).
+$check('GET /r/{code} referral landing is routed (not 404)', $kernel->handle($make('GET', '/r/ABCDEF0123'))->status() !== 404);
+$check('GET /account/affiliate requires auth', $redirectsToLogin($make('GET', '/account/affiliate')));
+$check('POST /account/affiliate/enroll blocked without CSRF (419)', $kernel->handle($make('POST', '/account/affiliate/enroll'))->status() === 419);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

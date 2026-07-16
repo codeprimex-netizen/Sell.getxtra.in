@@ -11,6 +11,7 @@ use App\Domain\Commerce\PaymentEvent;
 use App\Domain\Commerce\PaymentRepositoryInterface;
 use App\Domain\Commerce\PaymentStatus;
 use App\Domain\Commerce\WebhookEventRepositoryInterface;
+use App\Application\Affiliate\AffiliateService;
 use App\Application\Api\WebhookService;
 use App\Domain\Api\WebhookEvent;
 use App\Infrastructure\Observability\Logger;
@@ -36,6 +37,7 @@ final class PaymentService
         private Logger $logger,
         private ?Dispatcher $dispatcher = null,
         private ?WebhookService $webhooks = null,
+        private ?AffiliateService $affiliates = null,
     ) {
     }
 
@@ -121,6 +123,15 @@ final class PaymentService
         if (!empty($order['coupon_id'])) {
             $this->coupons->incrementUsage((int) $order['coupon_id']);
         }
+
+        // Attribute an affiliate commission on the buyer's first qualifying
+        // purchase (Req 20.2). Funded from the platform's cut; idempotent.
+        $this->affiliates?->attributeConversion(
+            (int) $order['buyer_id'],
+            $orderId,
+            (float) ($order['subtotal'] ?? 0),
+            (string) ($order['currency'] ?? 'INR'),
+        );
 
         // Fan out async work (Phase 9): generate the invoice off the request
         // path and notify the buyer. Under the sync driver these run inline.

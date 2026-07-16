@@ -150,7 +150,7 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 16.3 Analytics (self-hosted beacon + GA4 helper) + SEO (sitemap.xml, robots.txt, canonical, JSON-LD) _(Req 20, 20.3)_ **[M]** — _public launch + marketing are operational_
 - [x] 16.4 i18n/localization rollout: Translator + catalogs (en/hi) + locale middleware + locale-aware formatting _(Req 20.4)_ **[C]**
 - [ ] 16.5 Continuous optimization (query tuning, cache hit-rate, cost) _(Req 16, 17)_ **[S]** _(ongoing)_
-- [ ] 16.6 Roadmap: affiliate expansion, more gateways, partner API GA _(Req 19, 20.2)_ **[S]** _(future)_
+- [x] 16.6 Affiliate/referral program (codes, click→signup→conversion funnel, first-purchase commission ledgering) _(Req 20.2)_ **[S]** — _more gateways + partner-API GA remain future_
 
 ---
 

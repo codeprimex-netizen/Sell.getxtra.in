@@ -41,6 +41,10 @@ final class Config
             'analytics' => [
                 'ga4_id' => Env::get('GA4_MEASUREMENT_ID', ''),
             ],
+            'affiliate' => [
+                'enabled'      => (bool) Env::get('AFFILIATE_ENABLED', true),
+                'default_rate' => (float) Env::get('AFFILIATE_DEFAULT_RATE', 10),  // % of subtotal
+            ],
             'db' => [
                 'host'      => Env::get('DB_HOST', '127.0.0.1'),
                 'port'      => (int) Env::get('DB_PORT', 3306),
