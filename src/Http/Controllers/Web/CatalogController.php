@@ -52,8 +52,10 @@ final class CatalogController extends Controller
             $breadcrumbs[] = ['name' => (string) $category['name'], 'url' => $baseUrl . '/products?category=' . rawurlencode($categorySlug)];
         }
 
+        $products = $this->catalog->listApproved($categoryId, $perPage, ($page - 1) * $perPage);
+
         return $this->view($request, 'catalog.index', [
-            'products'         => $this->catalog->listApproved($categoryId, $perPage, ($page - 1) * $perPage),
+            'products'         => $products,
             'categories'       => $this->categories->allActive(),
             'active_category'  => $categorySlug,
             'page'             => $page,
@@ -61,6 +63,7 @@ final class CatalogController extends Controller
             'title'            => $title,
             'meta_description' => 'Browse and buy premium digital products, code, templates and assets on ' . (string) Config::get('app.name', 'Code.getxtra.in') . '.',
             'breadcrumbs'      => $breadcrumbs,
+            'schema'           => [StructuredData::itemList($products, $baseUrl, $title)],
         ]);
     }
 

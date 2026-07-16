@@ -70,6 +70,17 @@ $check('product includes brand + image + aggregateRating',
 $productNoRating = StructuredData::product(['id' => 1, 'slug' => 's', 'title' => 'T', 'base_price' => '0', 'currency' => 'INR', 'rating_count' => 0], 'https://www.code.getxtra.in');
 $check('product omits aggregateRating when no reviews', !isset($productNoRating['aggregateRating']));
 
+$list = StructuredData::itemList([
+    ['slug' => 'alpha', 'title' => 'Alpha'],
+    ['slug' => 'beta', 'title' => 'Beta'],
+    ['slug' => '', 'title' => 'skipme'],
+], 'https://www.code.getxtra.in', 'Themes');
+$check('itemList numbers items and skips slugless entries',
+    ($list['@type'] ?? '') === 'ItemList'
+    && ($list['numberOfItems'] ?? 0) === 2
+    && ($list['itemListElement'][0]['url'] ?? '') === 'https://www.code.getxtra.in/product/alpha'
+    && ($list['itemListElement'][1]['position'] ?? 0) === 2);
+
 echo "\n-- Seo head renderer --\n";
 
 $seo = (new Seo(
@@ -114,8 +125,16 @@ $check('json-ld contains Organization + WebSite + Product + BreadcrumbList',
     && str_contains($jsonld, '"Product"') && str_contains($jsonld, '"BreadcrumbList"'));
 $check('json-ld contains the SearchAction', str_contains($jsonld, '"SearchAction"'));
 
+$check('meta has web app manifest + application-name', str_contains($meta, '<link rel="manifest" href="/site.webmanifest">')
+    && str_contains($meta, '<meta name="application-name" content="Code.getxtra.in">'));
+
 $noindex = (new Seo('Code.getxtra.in', 'https://www.code.getxtra.in'))->noindex()->metaHtml();
 $check('noindex renders noindex,nofollow', str_contains($noindex, '<meta name="robots" content="noindex, nofollow">'));
+
+$check('shouldNoindex flags private areas', Seo::shouldNoindex('/dashboard') && Seo::shouldNoindex('/account/privacy')
+    && Seo::shouldNoindex('/checkout') && Seo::shouldNoindex('/cart') && Seo::shouldNoindex('/api/v1/products'));
+$check('shouldNoindex leaves public pages indexable', !Seo::shouldNoindex('/') && !Seo::shouldNoindex('/products')
+    && !Seo::shouldNoindex('/product/nova-template') && !Seo::shouldNoindex('/search'));
 
 $escaped = (new Seo('Code.getxtra.in', 'https://www.code.getxtra.in'))->title('A "quoted" & <tag>')->description('x')->metaHtml();
 $check('title is HTML-escaped in og/twitter', str_contains($escaped, 'A &quot;quoted&quot; &amp; &lt;tag&gt;') && !str_contains($escaped, '<tag>'));
@@ -138,8 +157,18 @@ $check('home emits JSON-LD @graph with Organization + WebSite', str_contains($hb
     && str_contains($hb, '"@graph"') && str_contains($hb, '"Organization"') && str_contains($hb, '"WebSite"'));
 $check('home JSON-LD carries a CSP nonce', (bool) preg_match('/application\/ld\+json" nonce="[^"]+"/', $hb));
 
+$check('home stays indexable', str_contains($hb, 'content="index, follow'));
+$check('home references the web app manifest', str_contains($hb, '<link rel="manifest" href="/site.webmanifest">'));
+
 $login = $kernel->handle($make('/login'));
 $check('GET /login is 200 with SEO head', $login->status() === 200 && str_contains($login->body(), '<meta property="og:site_name"'));
+
+$manifest = $kernel->handle($make('/site.webmanifest'));
+$mb = $manifest->body();
+$check('GET /site.webmanifest is 200 application/manifest+json',
+    $manifest->status() === 200 && str_contains($manifest->headers()['Content-Type'] ?? '', 'application/manifest+json'));
+$check('manifest declares name, start_url and standalone display',
+    str_contains($mb, '"name": "Code.getxtra.in"') && str_contains($mb, '"start_url": "/"') && str_contains($mb, '"display": "standalone"'));
 
 echo "\n";
 echo $failures === 0 ? "OK — advanced SEO verified.\n" : "FAILED — {$failures} check(s) failed.\n";

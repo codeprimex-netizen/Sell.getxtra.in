@@ -64,14 +64,57 @@ final class SeoController
             'Disallow: /admin/',
             'Disallow: /finance/',
             'Disallow: /seller/',
+            'Disallow: /dashboard',
             'Disallow: /checkout',
+            'Disallow: /cart',
+            'Disallow: /orders',
+            'Disallow: /downloads/',
+            'Disallow: /download/',
+            'Disallow: /2fa',
+            'Disallow: /logout',
             'Disallow: /api/',
+            '',
             'Sitemap: ' . $base . '/sitemap.xml',
             '',
         ]);
 
         return Response::text($body)
             ->withHeader('Content-Type', 'text/plain; charset=UTF-8')
+            ->withHeader('Cache-Control', 'public, max-age=86400');
+    }
+
+    /**
+     * Web App Manifest (PWA / technical SEO). Served at /site.webmanifest and
+     * referenced from every page head.
+     */
+    public function manifest(Request $request): Response
+    {
+        $name = (string) Config::get('app.name', 'Code.getxtra.in');
+        $logo = (string) Config::get('seo.logo', '');
+
+        $manifest = [
+            'name'             => $name,
+            'short_name'       => $name,
+            'description'      => __('app.tagline'),
+            'start_url'        => '/',
+            'scope'            => '/',
+            'display'          => 'standalone',
+            'theme_color'      => '#0f172a',
+            'background_color' => '#0f172a',
+            'lang'             => (string) Config::get('app.locale', 'en'),
+        ];
+
+        if ($logo !== '') {
+            $manifest['icons'] = [[
+                'src'     => $logo,
+                'sizes'   => '512x512',
+                'type'    => 'image/png',
+                'purpose' => 'any maskable',
+            ]];
+        }
+
+        return Response::text((string) json_encode($manifest, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT))
+            ->withHeader('Content-Type', 'application/manifest+json; charset=UTF-8')
             ->withHeader('Cache-Control', 'public, max-age=86400');
     }
 }

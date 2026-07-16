@@ -89,6 +89,37 @@ final class StructuredData
     }
 
     /**
+     * ItemList of products for a listing/collection page (rich-result eligible).
+     *
+     * @param array<int, array<string, mixed>> $products each needs slug + title
+     * @return array<string, mixed>
+     */
+    public static function itemList(array $products, string $baseUrl, string $name = 'Products'): array
+    {
+        $baseUrl = rtrim($baseUrl, '/');
+        $elements = [];
+        $position = 1;
+        foreach ($products as $p) {
+            $slug = (string) ($p['slug'] ?? '');
+            if ($slug === '') {
+                continue;
+            }
+            $elements[] = [
+                '@type'    => 'ListItem',
+                'position' => $position++,
+                'url'      => $baseUrl . '/product/' . rawurlencode($slug),
+                'name'     => (string) ($p['title'] ?? ''),
+            ];
+        }
+        return [
+            '@type'           => 'ItemList',
+            'name'            => $name,
+            'numberOfItems'   => count($elements),
+            'itemListElement' => $elements,
+        ];
+    }
+
+    /**
      * Product node (with Offer + optional AggregateRating + brand + seller).
      *
      * @param array<string, mixed> $p Expected: title, description, id, slug,

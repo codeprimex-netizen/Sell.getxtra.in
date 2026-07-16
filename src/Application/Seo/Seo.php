@@ -111,6 +111,26 @@ final class Seo
         return $this;
     }
 
+    /**
+     * Whether a path is a private/thin area that should not be indexed
+     * (authenticated dashboards, checkout/cart, downloads, API, …). Keeping
+     * these out of the index protects crawl budget and avoids thin/duplicate
+     * or gated pages ranking.
+     */
+    public static function shouldNoindex(string $path): bool
+    {
+        $private = [
+            '/account', '/admin', '/seller', '/finance', '/checkout', '/cart',
+            '/orders', '/dashboard', '/2fa', '/downloads', '/download', '/logout', '/api',
+        ];
+        foreach ($private as $prefix) {
+            if ($path === $prefix || str_starts_with($path, $prefix . '/')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function nonce(string $nonce): self
     {
         $this->nonce = $nonce;
@@ -172,6 +192,10 @@ final class Seo
         $lines[] = '<meta name="robots" content="' . $robots . '">';
         $lines[] = '<meta name="referrer" content="strict-origin-when-cross-origin">';
         $lines[] = '<meta name="theme-color" content="#0f172a">';
+
+        // PWA / technical SEO.
+        $lines[] = '<meta name="application-name" content="' . $this->e($this->siteName) . '">';
+        $lines[] = '<link rel="manifest" href="/site.webmanifest">';
 
         // Canonical + hreflang alternates.
         $lines[] = '<link rel="canonical" href="' . $this->e($this->canonical) . '">';

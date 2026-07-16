@@ -88,7 +88,9 @@ abstract class Controller
         if (!empty($data['seo_keywords'])) {
             $seo->keywords((string) $data['seo_keywords']);
         }
-        if (!empty($data['seo_noindex'])) {
+        // Private/thin areas are noindex by default; a view may force indexing
+        // with seo_index=true or opt in to noindex with seo_noindex=true.
+        if (!empty($data['seo_noindex']) || (Seo::shouldNoindex($request->path()) && empty($data['seo_index']))) {
             $seo->noindex(true);
         }
         if (!empty($data['breadcrumbs']) && is_array($data['breadcrumbs'])) {

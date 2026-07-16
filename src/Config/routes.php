@@ -75,6 +75,7 @@ return static function (Router $router): void {
     // ── SEO: sitemap + robots (Req 20.3) ──────────────────────────
     $router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
     $router->get('/robots.txt', [SeoController::class, 'robots']);
+    $router->get('/site.webmanifest', [SeoController::class, 'manifest']);
 
     // ── Guest-only auth (Req 2) ───────────────────────────────────
     $router->get('/register', [RegisterController::class, 'show'], ['guest']);
