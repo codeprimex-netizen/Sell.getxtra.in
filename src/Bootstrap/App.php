@@ -102,6 +102,15 @@ use App\Jobs\Handlers\DispatchWebhookHandler;
 use App\Jobs\Handlers\GenerateInvoiceHandler;
 use App\Jobs\Handlers\SendEmailHandler;
 use App\Jobs\Handlers\SendNotificationHandler;
+use App\Application\Api\ApiKeyService;
+use App\Application\Api\WebhookService;
+use App\Domain\Api\ApiKeyRepositoryInterface;
+use App\Domain\Api\WebhookSubscriptionRepositoryInterface;
+use App\Http\Controllers\Api\V1\OpenApiController;
+use App\Http\Middleware\ApiScope;
+use App\Http\Middleware\AuthenticateApiKey;
+use App\Infrastructure\Persistence\PdoApiKeyRepository;
+use App\Infrastructure\Persistence\PdoWebhookSubscriptionRepository;
 
 /**
  * Application bootstrapper.
@@ -133,6 +142,7 @@ final class App
         $this->registerAdminServices();
         $this->registerSellerServices();
         $this->registerQueueServices();
+        $this->registerApiServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -403,6 +413,33 @@ final class App
         });
     }
 
+    /**
+     * Bind the public API layer (Phase 10): API-key + webhook repositories and
+     * services, and the OpenAPI controller (which needs the base path). The
+     * apikey/scope middleware and API controllers autowire from these.
+     */
+    private function registerApiServices(): void
+    {
+        $c = $this->container;
+        $basePath = $this->basePath;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(ApiKeyRepositoryInterface::class,
+            static fn (Container $c) => new PdoApiKeyRepository($conn($c)));
+        $c->singleton(WebhookSubscriptionRepositoryInterface::class,
+            static fn (Container $c) => new PdoWebhookSubscriptionRepository($conn($c)));
+
+        $c->singleton(ApiKeyService::class,
+            static fn (Container $c) => new ApiKeyService($c->get(ApiKeyRepositoryInterface::class)));
+        $c->singleton(WebhookService::class, static fn (Container $c) => new WebhookService(
+            $c->get(WebhookSubscriptionRepositoryInterface::class),
+            $c->get(Dispatcher::class),
+        ));
+
+        $c->singleton(OpenApiController::class,
+            static fn (): OpenApiController => new OpenApiController($basePath));
+    }
+
     private function registerHttp(): void
     {
         $c = $this->container;
@@ -427,6 +464,8 @@ final class App
                     'mfa'             => EnsureTwoFactor::class,
                     'throttle'        => RateLimit::class,
                     'seller.verified' => \App\Http\Middleware\SellerVerified::class,
+                    'apikey'          => AuthenticateApiKey::class,
+                    'scope'           => ApiScope::class,
                 ],
             );
         });

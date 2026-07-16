@@ -100,10 +100,10 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [ ] 9.5 Scheduler (cron): sitemap, token/session cleanup, wallet clearing, reconciliation, reindex, reports _(Req 18.3)_ **[M]**
 
 ## Phase 10 — Public API & Integrations
-- [ ] 10.1 Versioned REST API `/api/v1` + JSON envelope + error codes _(Req 19.1)_ **[S]**
-- [ ] 10.2 API keys/OAuth tokens + scopes + per-key rate limits _(Req 19.2)_ **[S]**
-- [ ] 10.3 **OpenAPI 3** spec + contract tests _(Req 19.3)_ **[S]**
-- [ ] 10.4 Outbound signed webhooks (order paid, product approved, payout) + retries _(Req 19.4)_ **[S]**
+- [x] 10.1 Versioned REST API `/api/v1` + JSON envelope + error codes _(Req 19.1)_ **[S]**
+- [x] 10.2 API keys/OAuth tokens + scopes + per-key rate limits _(Req 19.2)_ **[S]**
+- [x] 10.3 **OpenAPI 3** spec + contract tests _(Req 19.3)_ **[S]**
+- [x] 10.4 Outbound signed webhooks (order paid, product approved, payout) + retries _(Req 19.4)_ **[S]**
 
 ## Phase 11 — Security Hardening & Compliance
 - [ ] 11.1 Audit: parameterized queries everywhere; SAST review _(Req 14.1)_ **[M]**

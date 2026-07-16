@@ -89,6 +89,16 @@ $unsub = $kernel->handle($make('GET', '/unsubscribe/sometoken'));
 $check('GET /unsubscribe/{token} is public (not a login redirect)',
     !($unsub->status() === 302 && ($unsub->headers()['Location'] ?? '') === '/login'));
 
+// Phase 10: public API is open; API-key endpoints reject anonymous callers with 401.
+$check('GET /api/v1/openapi.json serves the spec (200)', $kernel->handle($make('GET', '/api/v1/openapi.json'))->status() === 200);
+$check('GET /api/v1/products is public (not 401)', $kernel->handle($make('GET', '/api/v1/products'))->status() !== 401);
+$check('GET /api/v1/me without key is 401', $kernel->handle($make('GET', '/api/v1/me'))->status() === 401);
+$check('GET /api/v1/orders without key is 401', $kernel->handle($make('GET', '/api/v1/orders'))->status() === 401);
+$check('GET /api/v1/webhooks without key is 401', $kernel->handle($make('GET', '/api/v1/webhooks'))->status() === 401);
+// /api/ is CSRF-exempt, so an anonymous POST reaches the apikey guard -> 401 (not 419).
+$check('POST /api/v1/webhooks without key is 401 (CSRF-exempt)', $kernel->handle($make('POST', '/api/v1/webhooks'))->status() === 401);
+$check('GET /account/api-keys requires auth', $redirectsToLogin($make('GET', '/account/api-keys')));
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

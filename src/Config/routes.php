@@ -18,7 +18,14 @@ use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\PasswordResetController;
 use App\Http\Controllers\Web\Auth\RegisterController;
 use App\Http\Controllers\Web\Auth\TwoFactorController;
+use App\Http\Controllers\Api\V1\CategoryController as ApiCategoryController;
 use App\Http\Controllers\Api\V1\LicenseController;
+use App\Http\Controllers\Api\V1\MeController as ApiMeController;
+use App\Http\Controllers\Api\V1\OpenApiController as ApiOpenApiController;
+use App\Http\Controllers\Api\V1\OrderController as ApiOrderController;
+use App\Http\Controllers\Api\V1\ProductController as ApiProductController;
+use App\Http\Controllers\Api\V1\WebhookController as ApiWebhookController;
+use App\Http\Controllers\Web\Account\ApiKeyController as AccountApiKeyController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\CheckoutController;
@@ -94,6 +101,11 @@ return static function (Router $router): void {
 
     // One-click email unsubscribe via signed token — public (Req 13.3).
     $router->get('/unsubscribe/{token}', [UnsubscribeController::class, 'unsubscribe']);
+
+    // ── Developer: API key management (Req 19.2) ──────────────────
+    $router->get('/account/api-keys', [AccountApiKeyController::class, 'index'], ['auth']);
+    $router->post('/account/api-keys', [AccountApiKeyController::class, 'store'], ['auth', 'throttle:10,1']);
+    $router->post('/account/api-keys/revoke', [AccountApiKeyController::class, 'revoke'], ['auth']);
 
     // ── Public catalog + search (Req 4 / 6) ───────────────────────
     $router->get('/products', [CatalogController::class, 'index']);
@@ -194,10 +206,31 @@ return static function (Router $router): void {
     $router->post('/admin/products/{id}/feature', [AdminProductController::class, 'feature'], ['auth', 'mfa', 'can:product.feature']);
     $router->post('/admin/products/{id}/suspend', [AdminProductController::class, 'suspend'], ['auth', 'mfa', 'can:product.suspend']);
 
-    // ── API version banner (surface expands in Phase 10) ──────────
+    // ══ Public REST API v1 (Req 19) ═══════════════════════════════
+    // Envelope: { data, meta } on success, { error:{code,message} } on error.
+
     $router->get('/api/v1/ping', static fn (Request $r): Response =>
         Response::json([
             'data' => ['pong' => true, 'version' => 'v1'],
             'meta' => ['request_id' => $r->attribute('request_id')],
         ]));
+
+    // OpenAPI 3 specification (Req 19.3).
+    $router->get('/api/v1/openapi.json', [ApiOpenApiController::class, 'spec']);
+
+    // Public catalog reads (Req 19.1) — IP-throttled.
+    $router->get('/api/v1/products', [ApiProductController::class, 'index'], ['throttle:120,1']);
+    $router->get('/api/v1/products/{slug}', [ApiProductController::class, 'show'], ['throttle:120,1']);
+    $router->get('/api/v1/categories', [ApiCategoryController::class, 'index'], ['throttle:120,1']);
+    // Public license verification lives under the Phase 6 downloads block above.
+
+    // Authenticated API — Bearer API key + scopes + per-key rate limit (Req 19.2).
+    $router->get('/api/v1/me', [ApiMeController::class, 'show'], ['apikey']);
+    $router->get('/api/v1/orders', [ApiOrderController::class, 'index'], ['apikey', 'scope:orders.read']);
+    $router->get('/api/v1/orders/{orderNumber}', [ApiOrderController::class, 'show'], ['apikey', 'scope:orders.read']);
+
+    // Outbound webhook subscription management (Req 19.4).
+    $router->get('/api/v1/webhooks', [ApiWebhookController::class, 'index'], ['apikey', 'scope:webhooks.manage']);
+    $router->post('/api/v1/webhooks', [ApiWebhookController::class, 'store'], ['apikey', 'scope:webhooks.manage']);
+    $router->delete('/api/v1/webhooks/{id}', [ApiWebhookController::class, 'destroy'], ['apikey', 'scope:webhooks.manage']);
 };

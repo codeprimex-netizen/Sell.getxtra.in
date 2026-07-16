@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Application\Seller;
 
+use App\Application\Api\WebhookService;
 use App\Application\Audit\AuditLogger;
+use App\Domain\Api\WebhookEvent;
 use App\Domain\Commerce\LedgerRepositoryInterface;
 use App\Domain\Commerce\Money;
 use App\Domain\Seller\PayoutRepositoryInterface;
@@ -26,6 +28,7 @@ final class PayoutService
         private SellerWalletService $wallet,
         private LedgerRepositoryInterface $ledger,
         private AuditLogger $audit,
+        private ?WebhookService $webhooks = null,
     ) {
     }
 
@@ -84,6 +87,15 @@ final class PayoutService
 
         $this->payouts->updateStatus($payoutId, PayoutStatus::Paid->value, $gatewayRef);
         $this->audit->log('payout.paid', $actorId, 'payout', $payoutId, ['amount' => $payout['amount']]);
+
+        // Notify subscribed integrations (Req 19.4).
+        $this->webhooks?->emit(WebhookEvent::PAYOUT_PROCESSED, [
+            'payout_id'   => $payoutId,
+            'seller_id'   => (int) $payout['seller_id'],
+            'amount'      => (float) $payout['amount'],
+            'currency'    => $currency,
+            'gateway_ref' => $gatewayRef,
+        ]);
     }
 
     /** @throws SellerException */

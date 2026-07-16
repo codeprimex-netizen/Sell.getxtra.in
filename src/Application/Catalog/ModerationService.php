@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Application\Catalog;
 
+use App\Application\Api\WebhookService;
+use App\Domain\Api\WebhookEvent;
 use App\Domain\Catalog\ProductRepositoryInterface;
 use App\Domain\Catalog\ProductStatus;
 use App\Domain\Catalog\ProductVersionRepositoryInterface;
@@ -18,6 +20,7 @@ final class ModerationService
     public function __construct(
         private ProductRepositoryInterface $products,
         private ProductVersionRepositoryInterface $versions,
+        private ?WebhookService $webhooks = null,
     ) {
     }
 
@@ -48,6 +51,14 @@ final class ModerationService
         $this->products->markPublished($productId);
         // Reflect the current version's scan status on the product.
         $this->products->setScanStatus($productId, (string) ($current['scan_status'] ?? 'pending'));
+
+        // Notify subscribed integrations (Req 19.4).
+        $this->webhooks?->emit(WebhookEvent::PRODUCT_APPROVED, [
+            'product_id' => $productId,
+            'slug'       => (string) ($product['slug'] ?? ''),
+            'title'      => (string) ($product['title'] ?? ''),
+            'seller_id'  => (int) ($product['seller_id'] ?? 0),
+        ]);
     }
 
     /** @throws CatalogException */

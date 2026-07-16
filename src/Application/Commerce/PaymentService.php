@@ -11,6 +11,8 @@ use App\Domain\Commerce\PaymentEvent;
 use App\Domain\Commerce\PaymentRepositoryInterface;
 use App\Domain\Commerce\PaymentStatus;
 use App\Domain\Commerce\WebhookEventRepositoryInterface;
+use App\Application\Api\WebhookService;
+use App\Domain\Api\WebhookEvent;
 use App\Infrastructure\Observability\Logger;
 use App\Infrastructure\Payment\PaymentGatewayRegistry;
 use App\Infrastructure\Queue\Dispatcher;
@@ -33,6 +35,7 @@ final class PaymentService
         private LedgerService $ledger,
         private Logger $logger,
         private ?Dispatcher $dispatcher = null,
+        private ?WebhookService $webhooks = null,
     ) {
     }
 
@@ -133,6 +136,15 @@ final class PaymentService
                 ],
             ]);
         }
+
+        // Notify subscribed integrations (Req 19.4) — signed + retried async.
+        $this->webhooks?->emit(WebhookEvent::ORDER_PAID, [
+            'order_number' => (string) $order['order_number'],
+            'buyer_id'     => (int) $order['buyer_id'],
+            'currency'     => (string) ($order['currency'] ?? ''),
+            'total'        => (float) ($order['total'] ?? 0),
+            'status'       => OrderStatus::Paid->value,
+        ]);
 
         $this->logger->info('Order paid', ['order_id' => $orderId, 'order' => $order['order_number']]);
     }
