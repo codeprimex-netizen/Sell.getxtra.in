@@ -69,6 +69,28 @@ if (!function_exists('asset')) {
     }
 }
 
+if (!function_exists('__')) {
+    /**
+     * Translate a message key for the current locale (Req 20.4).
+     *
+     * @param array<string,string|int|float> $replace
+     */
+    function __(string $key, array $replace = [], ?string $locale = null): string
+    {
+        /** @var App\Infrastructure\I18n\Translator $translator */
+        $translator = app(App\Infrastructure\I18n\Translator::class);
+        return $translator->translate($key, $replace, $locale);
+    }
+}
+
+if (!function_exists('trans')) {
+    /** Alias of __() for message translation (Req 20.4). @param array<string,string|int|float> $replace */
+    function trans(string $key, array $replace = [], ?string $locale = null): string
+    {
+        return __($key, $replace, $locale);
+    }
+}
+
 if (!function_exists('money')) {
     /**
      * Format a decimal amount with a currency prefix.

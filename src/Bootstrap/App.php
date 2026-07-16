@@ -221,6 +221,29 @@ final class App
             );
         });
 
+        // Localization (Req 20.4): translator + locale-aware formatter.
+        $c->singleton(\App\Infrastructure\I18n\Translator::class, static fn (): \App\Infrastructure\I18n\Translator =>
+            new \App\Infrastructure\I18n\Translator(
+                $basePath . '/resources/lang',
+                (string) Config::get('app.locale', 'en'),
+                (string) Config::get('app.fallback_locale', 'en'),
+                (array) Config::get('app.supported_locales', ['en']),
+            ));
+        $c->singleton(\App\Infrastructure\I18n\LocaleFormatter::class, static fn (): \App\Infrastructure\I18n\LocaleFormatter =>
+            new \App\Infrastructure\I18n\LocaleFormatter((string) Config::get('app.locale', 'en')));
+
+        // Privacy-aware analytics (Req 20 / 16.3).
+        $c->singleton(\App\Application\Analytics\AnalyticsService::class, static fn (Container $c) =>
+            new \App\Application\Analytics\AnalyticsService(
+                $c->get(MetricsRegistry::class),
+                $c->get(Logger::class),
+                (string) Config::get('analytics.ga4_id', ''),
+            ));
+
+        // SEO sitemap generator (Req 20.3).
+        $c->singleton(\App\Application\Seo\SitemapGenerator::class, static fn (): \App\Application\Seo\SitemapGenerator =>
+            new \App\Application\Seo\SitemapGenerator((string) Config::get('app.url', 'https://www.sell.getxtra.in')));
+
         // Session store: cache-backed (stateless tier) when configured, else native.
         $c->singleton(SessionStore::class, static function (Container $c): SessionStore {
             if (in_array((string) Config::get('session.driver', 'file'), ['cache', 'redis'], true)) {
@@ -630,6 +653,7 @@ final class App
                     SecurityHeaders::class,
                     \App\Http\Middleware\ThrottleGlobal::class,
                     StartSession::class,
+                    \App\Http\Middleware\Localize::class,
                     VerifyCsrf::class,
                 ],
                 aliases: [

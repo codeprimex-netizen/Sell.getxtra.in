@@ -121,6 +121,19 @@ $check('GET /metrics returns Prometheus text', $metricsRes->status() === 200
     && str_contains($metricsRes->headers()['Content-Type'] ?? '', 'text/plain')
     && str_contains($metricsRes->body(), 'queue_depth'));
 
+// Phase 16: SEO, localization, analytics beacon.
+$robots = $kernel->handle($make('GET', '/robots.txt'));
+$check('GET /robots.txt is 200 text with a Sitemap directive',
+    $robots->status() === 200 && str_contains($robots->body(), 'Sitemap:'));
+$check('GET /sitemap.xml route is wired (not 404)', $kernel->handle($make('GET', '/sitemap.xml'))->status() !== 404);
+$check('layout renders default locale', str_contains($kernel->handle($make('GET', '/login'))->body(), 'lang="en"'));
+$loginHi = new Request('GET', '/login', ['lang' => 'hi'], [], [
+    'REQUEST_METHOD' => 'GET', 'REQUEST_URI' => '/login?lang=hi', 'REMOTE_ADDR' => '127.0.0.1',
+]);
+$check('layout honours ?lang=hi (localization end-to-end)', str_contains($kernel->handle($loginHi)->body(), 'lang="hi"'));
+$evt = $kernel->handle($make('POST', '/api/v1/events'));
+$check('POST /api/v1/events is CSRF-exempt and validates (422)', $evt->status() === 422);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

@@ -31,6 +31,15 @@ final class Config
                 'url'      => Env::get('APP_URL', 'https://www.sell.getxtra.in'),
                 'key'      => Env::get('APP_KEY', ''),
                 'timezone' => Env::get('APP_TIMEZONE', 'UTC'),
+                'locale'           => Env::get('APP_LOCALE', 'en'),
+                'fallback_locale'  => Env::get('APP_FALLBACK_LOCALE', 'en'),
+                'supported_locales' => array_values(array_filter(array_map(
+                    'trim',
+                    explode(',', (string) Env::get('APP_SUPPORTED_LOCALES', 'en,hi')),
+                ))),
+            ],
+            'analytics' => [
+                'ga4_id' => Env::get('GA4_MEASUREMENT_ID', ''),
             ],
             'db' => [
                 'host'      => Env::get('DB_HOST', '127.0.0.1'),

@@ -22,7 +22,7 @@ $suites = [
     'phase2', 'http_auth',
     'phase3', 'http_catalog',
     'phase4', 'phase5', 'phase6', 'phase7', 'phase8',
-    'phase9', 'phase10', 'phase11', 'phase12', 'phase13',
+    'phase9', 'phase10', 'phase11', 'phase12', 'phase13', 'phase16',
     'e2e', 'security', 'security_authz',
 ];
 

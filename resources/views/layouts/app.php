@@ -11,11 +11,13 @@ $flashSuccess = $flash_success ?? null;
 $flashError = $flash_error ?? null;
 ?>
 <!doctype html>
-<html lang="en">
+<html lang="<?= e($locale ?? 'en') ?>">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title ?? $app_name) ?></title>
+  <?php if (!empty($canonical)): ?><link rel="canonical" href="<?= e((string) $canonical) ?>"><?php endif; ?>
+  <?php if (!empty($meta_description)): ?><meta name="description" content="<?= e((string) $meta_description) ?>"><?php endif; ?>
   <style>
     :root{color-scheme:dark}
     *{box-sizing:border-box}

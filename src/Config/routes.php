@@ -37,7 +37,9 @@ use App\Http\Controllers\Web\MetricsController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\PaymentWebhookController;
 use App\Http\Controllers\Web\ReviewController;
+use App\Http\Controllers\Api\V1\EventController as ApiEventController;
 use App\Http\Controllers\Web\SearchController;
+use App\Http\Controllers\Web\SeoController;
 use App\Http\Controllers\Web\UnsubscribeController;
 use App\Http\Controllers\Web\Finance\KycController as FinanceKycController;
 use App\Http\Controllers\Web\Finance\PayoutController as FinancePayoutController;
@@ -67,6 +69,10 @@ return static function (Router $router): void {
 
     // ── Prometheus metrics scrape (Req 15.2) ──────────────────────
     $router->get('/metrics', [MetricsController::class, 'index']);
+
+    // ── SEO: sitemap + robots (Req 20.3) ──────────────────────────
+    $router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
+    $router->get('/robots.txt', [SeoController::class, 'robots']);
 
     // ── Guest-only auth (Req 2) ───────────────────────────────────
     $router->get('/register', [RegisterController::class, 'show'], ['guest']);
@@ -235,6 +241,9 @@ return static function (Router $router): void {
     $router->get('/api/v1/products/{slug}', [ApiProductController::class, 'show'], ['throttle:120,1']);
     $router->get('/api/v1/categories', [ApiCategoryController::class, 'index'], ['throttle:120,1']);
     // Public license verification lives under the Phase 6 downloads block above.
+
+    // Self-hosted analytics beacon (Req 20 / 16.3) — public, CSRF-exempt, throttled.
+    $router->post('/api/v1/events', [ApiEventController::class, 'track'], ['throttle:120,1']);
 
     // Authenticated API — Bearer API key + scopes + per-key rate limit (Req 19.2).
     $router->get('/api/v1/me', [ApiMeController::class, 'show'], ['apikey']);

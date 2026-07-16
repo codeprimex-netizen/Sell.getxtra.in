@@ -145,12 +145,12 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 15.4 Security tests (SQLi/XSS/CSRF/authz) _(Req 24.3)_ **[M]**
 
 ## Phase 16 — Launch & Post-Launch _(Ongoing)_
-- [ ] 16.1 Beta with limited verified sellers + feedback loop **[M]**
-- [ ] 16.2 Bug-bash + hardening pass **[M]**
-- [ ] 16.3 Public launch + marketing; analytics (GA4/self-hosted) _(Req 20)_ **[M]**
-- [ ] 16.4 i18n/localization rollout _(Req 20.4)_ **[C]**
-- [ ] 16.5 Continuous optimization (query tuning, cache hit-rate, cost) _(Req 16, 17)_ **[S]**
-- [ ] 16.6 Roadmap: affiliate expansion, more gateways, partner API GA _(Req 19, 20.2)_ **[S]**
+- [ ] 16.1 Beta with limited verified sellers + feedback loop **[M]** _(operational)_
+- [ ] 16.2 Bug-bash + hardening pass **[M]** _(operational)_
+- [x] 16.3 Analytics (self-hosted beacon + GA4 helper) + SEO (sitemap.xml, robots.txt, canonical, JSON-LD) _(Req 20, 20.3)_ **[M]** — _public launch + marketing are operational_
+- [x] 16.4 i18n/localization rollout: Translator + catalogs (en/hi) + locale middleware + locale-aware formatting _(Req 20.4)_ **[C]**
+- [ ] 16.5 Continuous optimization (query tuning, cache hit-rate, cost) _(Req 16, 17)_ **[S]** _(ongoing)_
+- [ ] 16.6 Roadmap: affiliate expansion, more gateways, partner API GA _(Req 19, 20.2)_ **[S]** _(future)_
 
 ---
 

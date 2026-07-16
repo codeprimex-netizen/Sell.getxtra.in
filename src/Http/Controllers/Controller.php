@@ -31,6 +31,7 @@ abstract class Controller
             'auth_user'     => $request->attribute('auth_user'),
             'csrf_token'    => $session?->csrfToken() ?? '',
             'csp_nonce'     => (string) ($request->attribute('csp_nonce') ?? ''),
+            'locale'        => (string) ($request->attribute('locale') ?? 'en'),
             'flash_success' => $session?->getFlash('success'),
             'flash_error'   => $session?->getFlash('error'),
             'errors'        => $data['errors'] ?? [],
