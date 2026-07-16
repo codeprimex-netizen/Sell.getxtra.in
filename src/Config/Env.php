@@ -55,15 +55,30 @@ final class Env
 
     private static function normalizeValue(string $value): string
     {
-        // Strip surrounding quotes.
-        if (
-            (str_starts_with($value, '"') && str_ends_with($value, '"'))
-            || (str_starts_with($value, "'") && str_ends_with($value, "'"))
-        ) {
-            $value = substr($value, 1, -1);
+        if ($value === '') {
+            return '';
         }
 
-        return $value;
+        // Quoted values: return the literal content between the opening quote
+        // and the next matching quote. Anything after the closing quote (for
+        // example a trailing inline comment) is ignored, and '#' inside the
+        // quotes is preserved verbatim.
+        $quote = $value[0];
+        if ($quote === '"' || $quote === "'") {
+            $end = strpos($value, $quote, 1);
+            if ($end !== false) {
+                return substr($value, 1, $end - 1);
+            }
+            return substr($value, 1);
+        }
+
+        // Unquoted values: strip an inline comment introduced at the start of
+        // the value or by leading whitespace followed by '#'. A '#' that is
+        // part of the value itself (no leading whitespace, e.g. a token like
+        // "ab#cd") is kept intact.
+        $value = preg_replace('/(^|\s)#.*$/', '', $value) ?? $value;
+
+        return rtrim($value);
     }
 
     /**

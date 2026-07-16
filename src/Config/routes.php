@@ -33,6 +33,7 @@ use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\DownloadController;
+use App\Http\Controllers\Web\FaqController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\MetricsController;
@@ -75,6 +76,10 @@ return static function (Router $router): void {
     // ── SEO: sitemap + robots (Req 20.3) ──────────────────────────
     $router->get('/sitemap.xml', [SeoController::class, 'sitemap']);
     $router->get('/robots.txt', [SeoController::class, 'robots']);
+    $router->get('/site.webmanifest', [SeoController::class, 'manifest']);
+
+    // ── Public help / FAQ (FAQPage structured data) ───────────────
+    $router->get('/faq', [FaqController::class, 'index']);
 
     // ── Guest-only auth (Req 2) ───────────────────────────────────
     $router->get('/register', [RegisterController::class, 'show'], ['guest']);

@@ -1,4 +1,4 @@
-# Multi-stage build for Sell.getxtra.in (Req 23.3).
+# Multi-stage build for Code.getxtra.in (Req 23.3).
 # Stage 1 resolves production dependencies; stage 2 is a lean PHP-FPM runtime.
 
 # ── Stage 1: composer dependencies ─────────────────────────────────

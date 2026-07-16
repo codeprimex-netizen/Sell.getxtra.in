@@ -38,12 +38,16 @@ final class HomeController extends Controller
             // Degrade gracefully: render the landing without live rails.
         }
 
+        $appName = (string) Config::get('app.name', 'Code.getxtra.in');
+
         return $this->view($request, 'home', [
             'featured'         => $featured,
             'categories'       => $categories,
             'wide'             => true,
+            'title'            => $appName . ' — ' . __('app.tagline'),
             'canonical'        => rtrim((string) Config::get('app.url', ''), '/') . '/',
             'meta_description' => __('app.tagline'),
+            'seo_type'         => 'website',
         ]);
     }
 }

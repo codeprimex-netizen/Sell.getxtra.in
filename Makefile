@@ -1,4 +1,4 @@
-# Sell.getxtra.in — developer & ops convenience targets.
+# Code.getxtra.in — developer & ops convenience targets.
 .DEFAULT_GOAL := help
 .PHONY: help install key migrate rollback seed serve worker schedule \
         test lint analyse syntax ci docker-build up down

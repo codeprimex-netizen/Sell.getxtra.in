@@ -1,0 +1,38 @@
+# Root .htaccess — used only when the web server's document root is the
+# PROJECT ROOT (e.g. cPanel public_html with the project extracted directly).
+#
+# The recommended, cleaner setup is to point the document root at public/
+# (in cPanel: Domains → set the document root to .../public). In that case
+# this file sits above the document root and is simply ignored, while
+# public/.htaccess handles routing.
+#
+# When the document root IS the project root, this file (a) routes requests
+# through the front controller and (b) blocks direct web access to the
+# application internals so .env, source and storage can never be downloaded.
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Block dotfiles (.env, .git, …) but allow ACME / .well-known.
+    RewriteRule (^|/)\.(?!well-known)  - [F]
+
+    # Block application internals outright.
+    RewriteRule ^(src|bin|bootstrap|database|deploy|docker|resources|storage|tests|vendor)(/|$) - [F,L]
+    RewriteRule ^(composer\.(json|lock)|phpunit\.xml|phpcs\.xml|phpstan\.neon|Makefile|README\.md|DESIGN\.md|REQUIREMENTS\.md|TASKS\.md)$ - [F,L]
+
+    # Serve real existing files/directories as-is.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Everything else goes through the front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Belt-and-suspenders: deny sensitive files even if mod_rewrite is unavailable.
+<FilesMatch "^\.env">
+    Require all denied
+</FilesMatch>
+<FilesMatch "\.(env|lock|neon|dist|md|sh|sql)$">
+    Require all denied
+</FilesMatch>

@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use App\Bootstrap\App;
+use App\Console\Installer;
 use App\Console\MigrationRunner;
 use App\Console\Seeder;
 use App\Infrastructure\Persistence\ConnectionManager;
@@ -21,7 +22,30 @@ use App\Infrastructure\Scheduler\Scheduler;
 
 $basePath = dirname(__DIR__);
 
-require $basePath . '/vendor/autoload.php';
+require $basePath . '/bootstrap/autoload.php';
+
+/**
+ * Parse `--key=value` / `--flag` options from a CLI argv slice.
+ *
+ * @param array<int, string> $args
+ * @return array<string, string|bool>
+ */
+$parseOptions = static function (array $args): array {
+    $opts = [];
+    foreach ($args as $arg) {
+        if (!str_starts_with($arg, '--')) {
+            continue;
+        }
+        $arg = substr($arg, 2);
+        if (str_contains($arg, '=')) {
+            [$k, $v] = explode('=', $arg, 2);
+            $opts[$k] = $v;
+        } else {
+            $opts[$arg] = true;
+        }
+    }
+    return $opts;
+};
 
 $app = (new App($basePath))->boot();
 $container = $app->container();
@@ -43,6 +67,43 @@ try {
 
         case 'seed':
             (new Seeder($connection))->run();
+            break;
+
+        case 'install':
+            $opts = $parseOptions(array_slice($argv, 2));
+            $installer = new Installer($basePath);
+
+            if ($installer->isInstalled() && empty($opts['force'])) {
+                fwrite(STDERR, "Already installed (storage/installed.lock exists). Re-run with --force to reinstall.\n");
+                exit(1);
+            }
+
+            $config = [
+                'db' => [
+                    'host'     => (string) ($opts['db-host'] ?? '127.0.0.1'),
+                    'port'     => (int) ($opts['db-port'] ?? 3306),
+                    'database' => (string) ($opts['db-name'] ?? 'getxtrain_Codegetxdata'),
+                    'username' => (string) ($opts['db-user'] ?? 'getxtrain_Codegetuser'),
+                    'password' => (string) ($opts['db-pass'] ?? ''),
+                ],
+                'app' => [
+                    'url'   => (string) ($opts['url'] ?? 'https://www.code.getxtra.in'),
+                    'name'  => (string) ($opts['name'] ?? 'Code.getxtra.in'),
+                    'env'   => (string) ($opts['env'] ?? 'production'),
+                    'debug' => (string) ($opts['env'] ?? 'production') !== 'production',
+                ],
+                'admin' => [
+                    'name'     => (string) ($opts['admin-name'] ?? 'Administrator'),
+                    'email'    => (string) ($opts['admin-email'] ?? ''),
+                    'password' => (string) ($opts['admin-password'] ?? ''),
+                ],
+            ];
+
+            fwrite(STDOUT, "Installing Code.getxtra.in…\n");
+            foreach ($installer->run($config, !empty($opts['force'])) as $line) {
+                fwrite(STDOUT, "  ✔ {$line}\n");
+            }
+            fwrite(STDOUT, "\nDone. Delete install.php and public/install.php for security if you used the web wizard.\n");
             break;
 
         case 'clear-balances':
@@ -76,15 +137,24 @@ try {
 
         default:
             fwrite(STDOUT, <<<TXT
-            Sell.getxtra.in console
+            Code.getxtra.in console
 
             Commands:
+              install         Provision a fresh deployment (see options below)
               migrate         Apply pending database migrations
               rollback        Roll back the last migration batch
               seed            Seed baseline data
               clear-balances  Clear seller earnings past the refund window
               queue:work      Process queued jobs (optional queue name arg)
               schedule:run    Run due scheduled tasks (--force to run all)
+
+            Install (headless) example:
+              php bin/console install \
+                --db-host=127.0.0.1 --db-port=3306 --db-name=getxtrain_Codegetxdata \
+                --db-user=root --db-pass=secret \
+                --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
+                --admin-name="Admin" --admin-email=admin@code.getxtra.in \
+                --admin-password=change-me-please [--force]
 
             TXT);
             break;

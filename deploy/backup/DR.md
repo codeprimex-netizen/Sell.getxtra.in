@@ -1,4 +1,4 @@
-# Disaster Recovery Plan — Sell.getxtra.in (Req 17.5 / 22.2)
+# Disaster Recovery Plan — Code.getxtra.in (Req 17.5 / 22.2)
 
 ## Objectives
 - **RPO ≤ 15 minutes** — max acceptable data loss.

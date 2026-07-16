@@ -18,7 +18,7 @@ final class PdfInvoiceRenderer implements InvoiceRenderer
         $cur = (string) $invoice['currency'];
         $lines = [
             'INVOICE  ' . (string) $invoice['number'],
-            (string) ($invoice['site'] ?? 'Sell.getxtra.in') . '  -  ' . (string) ($invoice['developer'] ?? 'ANSHU E-MITRA AND CSC CENTER'),
+            (string) ($invoice['site'] ?? 'Code.getxtra.in') . '  -  ' . (string) ($invoice['developer'] ?? 'ANSHU E-MITRA AND CSC CENTER'),
             str_repeat('-', 56),
             $this->row('Item', 'Price (' . $cur . ')'),
             str_repeat('-', 56),

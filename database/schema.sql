@@ -1,5 +1,5 @@
 -- ─────────────────────────────────────────────────────────────────────────
--- Sell.getxtra.in — Reference Schema (Phase 1: identity & platform core)
+-- Code.getxtra.in — Reference Schema (Phase 1: identity & platform core)
 --
 -- NOTE: Versioned migrations in database/migrations/ are the source of truth.
 -- This file is a convenience snapshot for review and fresh local setup.

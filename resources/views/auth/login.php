@@ -5,7 +5,7 @@ $old = $old ?? [];
 ?>
 <div class="card">
   <h1>Welcome back</h1>
-  <p class="sub">Sign in to your Sell.getxtra.in account.</p>
+  <p class="sub">Sign in to your Code.getxtra.in account.</p>
 
   <?php if (!empty($errors['email'])): ?>
     <div class="alert err"><?= e($errors['email'][0]) ?></div>

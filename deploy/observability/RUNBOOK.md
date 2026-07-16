@@ -1,4 +1,4 @@
-# On-call Runbook — Sell.getxtra.in
+# On-call Runbook — Code.getxtra.in
 
 Observability stack (Req 15): structured JSON logs (Loki), RED + KPI metrics
 (Prometheus/Grafana), distributed traces (OpenTelemetry / `traceparent`), and

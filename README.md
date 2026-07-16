@@ -1,4 +1,4 @@
-# Sell.getxtra.in
+# Code.getxtra.in
 
 Enterprise digital-products marketplace — buy and sell themes, plugins, templates,
 UI kits and code, with instant, secure downloads and licensing.
@@ -7,7 +7,7 @@ Built in **custom Core PHP 8.x (no framework)** on **MySQL/PDO**, with a layered
 dependency-injected, PSR-4 architecture. Security, DI, routing, and reliability are
 engineered in-house and covered by automated tests.
 
-> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://www.sell.getxtra.in
+> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://www.code.getxtra.in
 
 ---
 
@@ -52,7 +52,59 @@ engineered in-house and covered by automated tests.
 - PHP ≥ 8.2 with `pdo_mysql`, `mbstring`, `intl` (and `redis` in production)
 - Composer 2, MySQL 8, Redis (production)
 
-## Quick start
+## Installation
+
+The fastest way to provision a fresh deployment is the built-in **installer**,
+which checks requirements, creates the database, generates `APP_KEY`, writes
+`.env`, runs migrations + seeders, and creates your first admin account.
+
+> **No Composer? No problem.** This project has **no third-party runtime
+> dependencies**, so it runs even if `composer install` was never executed —
+> a built-in fallback autoloader (`bootstrap/autoload.php`) covers it. Running
+> `composer install --no-dev -o` is still recommended for the optimized
+> autoloader when available.
+
+### Web wizard (recommended — works on cPanel)
+
+1. Upload/extract the project on your host.
+2. Open the installer at your **main domain root**:
+   **`https://your-domain/install.php`** — on first run the site also
+   auto-redirects here until setup is complete.
+3. Follow the steps: welcome → requirements → database → configuration → finish.
+4. When it completes, **delete `install.php` and `public/install.php`** for
+   security (a `storage/installed.lock` file also prevents re-runs).
+
+**Document root:** point it at the **`public/`** directory (cleanest). If you
+cannot change it (e.g. files extracted straight into `public_html`), the
+included root `index.php` + `.htaccess` make the app work from the project root
+too, while blocking web access to `.env`, `src/`, `storage/`, `vendor/`, etc.
+
+### Headless CLI
+
+```bash
+composer install --no-dev -o    # optional (fallback autoloader works without it)
+php bin/console install \
+  --db-host=localhost --db-port=3306 --db-name=getxtrain_Codegetxdata \
+  --db-user=getxtrain_Codegetuser --db-pass=secret \
+  --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
+  --admin-name="Admin" --admin-email=admin@code.getxtra.in \
+  --admin-password=change-me-please
+```
+
+### cPanel quick guide
+
+1. **MySQL Databases** → create DB `Codegetxdata` (becomes
+   `getxtrain_Codegetxdata`) and user `Codegetuser` (becomes
+   `getxtrain_Codegetuser`); add the user with **ALL PRIVILEGES**.
+2. Upload the project; set the domain's **document root to `.../public`**
+   (or extract into `public_html` and rely on the bundled root shim).
+3. In **MultiPHP Manager**, set PHP to **8.2+** (8.3 recommended).
+4. Visit **`https://your-domain/install.php`** and complete the wizard
+   (DB host = `localhost`).
+5. Delete `install.php` + `public/install.php`; enable **AutoSSL**; add the
+   scheduler cron: `* * * * * php /home/USER/APP/bin/console schedule:run`.
+
+## Quick start (manual)
 
 ```bash
 cp .env.example .env
@@ -93,6 +145,7 @@ composer syntax      # php -l across the tree
 ## Console
 
 ```
+php bin/console install [--db-host= --db-name= --db-user= --db-pass= --url= --admin-email= --admin-password= --force]
 php bin/console migrate | rollback | seed
 php bin/console queue:work [queue]
 php bin/console schedule:run [--force]

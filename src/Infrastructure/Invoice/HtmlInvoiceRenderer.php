@@ -14,7 +14,7 @@ final class HtmlInvoiceRenderer implements InvoiceRenderer
         $num = htmlspecialchars((string) $invoice['number']);
         $cur = htmlspecialchars((string) $invoice['currency']);
         $dev = htmlspecialchars((string) ($invoice['developer'] ?? 'ANSHU E-MITRA AND CSC CENTER'));
-        $site = htmlspecialchars((string) ($invoice['site'] ?? 'Sell.getxtra.in'));
+        $site = htmlspecialchars((string) ($invoice['site'] ?? 'Code.getxtra.in'));
 
         $rows = '';
         foreach ((array) $invoice['items'] as $item) {

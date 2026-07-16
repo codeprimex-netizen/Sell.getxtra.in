@@ -22,7 +22,7 @@ final class HealthController
     /** Liveness: process is up. */
     public function live(Request $request): Response
     {
-        return Response::json(['status' => 'ok', 'service' => 'sell.getxtra.in']);
+        return Response::json(['status' => 'ok', 'service' => 'code.getxtra.in']);
     }
 
     /** Readiness: dependencies reachable. */

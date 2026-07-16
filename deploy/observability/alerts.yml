@@ -1,4 +1,4 @@
-# Prometheus alerting rules for Sell.getxtra.in (Req 15.6).
+# Prometheus alerting rules for Code.getxtra.in (Req 15.6).
 # Routed to on-call via Alertmanager. Thresholds are starting points; tune per
 # observed baselines. Event-driven alerts (payment failure, dead-letter) are
 # also emitted directly by the application via AlertService.

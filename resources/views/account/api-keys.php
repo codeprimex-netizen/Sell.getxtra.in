@@ -5,7 +5,7 @@ $all_scopes = $all_scopes ?? [];
 ?>
 <div class="card">
   <h1>API keys</h1>
-  <p class="sub">Programmatic access to the Sell.getxtra.in API. Authenticate requests with <code>Authorization: Bearer &lt;token&gt;</code>.</p>
+  <p class="sub">Programmatic access to the Code.getxtra.in API. Authenticate requests with <code>Authorization: Bearer &lt;token&gt;</code>.</p>
 
   <?php if (!empty($new_token)): ?>
     <div class="notice" style="background:#052e2b;border:1px solid #0d9488;padding:1rem;border-radius:8px;margin:1rem 0">

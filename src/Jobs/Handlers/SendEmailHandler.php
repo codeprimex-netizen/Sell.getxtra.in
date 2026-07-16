@@ -23,7 +23,7 @@ final class SendEmailHandler implements JobHandler
         if ($to === '') {
             return;
         }
-        $subject = (string) ($payload['subject'] ?? 'Notification from Sell.getxtra.in');
+        $subject = (string) ($payload['subject'] ?? 'Notification from Code.getxtra.in');
         $html = $this->render((string) ($payload['template'] ?? 'generic'), (array) ($payload['vars'] ?? []));
 
         $this->mailer->send($to, $subject, $html);
@@ -43,6 +43,6 @@ final class SendEmailHandler implements JobHandler
 
         return '<!doctype html><html><body style="font-family:sans-serif">'
             . '<h2>' . $title . '</h2>' . $lines
-            . '<hr><p style="color:#888;font-size:12px">Sell.getxtra.in</p></body></html>';
+            . '<hr><p style="color:#888;font-size:12px">Code.getxtra.in</p></body></html>';
     }
 }

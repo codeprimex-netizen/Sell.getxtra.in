@@ -8,7 +8,7 @@
 set -euo pipefail
 
 TAG="${1:?usage: rollout.sh <image-tag>}"
-IMAGE="${IMAGE:-ghcr.io/codeprimex-netizen/sell.getxtra.in}"
+IMAGE="${IMAGE:-ghcr.io/codeprimex-netizen/code.getxtra.in}"
 
 echo "[rollout] running gated migrations @ ${TAG}"
 kubectl set image job/sell-migrate migrate="${IMAGE}:${TAG}" --local -o yaml | kubectl apply -f -

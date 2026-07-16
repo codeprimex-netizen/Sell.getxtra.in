@@ -14,7 +14,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          image: ghcr.io/codeprimex-netizen/code.getxtra.in:latest
           command: ["php", "bin/console", "migrate"]
           envFrom:
             - configMapRef: { name: sell-config }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Application\Seo\Seo;
 use App\Config\Config;
 use App\Http\Request;
 use App\Http\Response;
@@ -27,7 +28,7 @@ abstract class Controller
         $session = $this->session($request);
 
         $shared = [
-            'app_name'      => (string) Config::get('app.name', 'Sell.getxtra.in'),
+            'app_name'      => (string) Config::get('app.name', 'Code.getxtra.in'),
             'auth_user'     => $request->attribute('auth_user'),
             'csrf_token'    => $session?->csrfToken() ?? '',
             'csp_nonce'     => (string) ($request->attribute('csp_nonce') ?? ''),
@@ -36,9 +37,76 @@ abstract class Controller
             'flash_error'   => $session?->getFlash('error'),
             'errors'        => $data['errors'] ?? [],
             'old'           => $data['old'] ?? [],
+            'seo_head'      => $this->buildSeo($request, $data)->head(),
         ];
 
         return Response::html(View::render($template, array_merge($shared, $data)), $status);
+    }
+
+    /**
+     * Compose the advanced SEO head for the current page from Config defaults,
+     * the request (locale + path), and per-view overrides in $data:
+     *   title, meta_description, canonical, og_image, seo_type, seo_keywords,
+     *   seo_noindex, breadcrumbs (list of [name,url]), schema (list of nodes).
+     *
+     * @param array<string, mixed> $data
+     */
+    protected function buildSeo(Request $request, array $data): Seo
+    {
+        $baseUrl = (string) Config::get('app.url', '');
+        $locale = (string) ($request->attribute('locale') ?? Config::get('app.locale', 'en'));
+
+        /** @var list<string> $supported */
+        $supported = array_values(array_map('strval', (array) Config::get('app.supported_locales', ['en'])));
+
+        $logo = (string) Config::get('seo.logo', '');
+
+        $seo = new Seo(
+            siteName: (string) Config::get('app.name', 'Code.getxtra.in'),
+            baseUrl: $baseUrl,
+            locale: $locale,
+            supportedLocales: $supported,
+            logoUrl: $logo !== '' ? $logo : null,
+            sameAs: array_values((array) Config::get('seo.same_as', [])),
+            cdnUrl: ((string) Config::get('storage.cdn_url', '')) ?: null,
+            twitterHandle: ((string) Config::get('seo.twitter', '')) ?: null,
+        );
+
+        $seo->canonical((string) ($data['canonical'] ?? (rtrim($baseUrl, '/') . $request->path())))
+            ->nonce((string) ($request->attribute('csp_nonce') ?? ''));
+
+        if (!empty($data['title'])) {
+            $seo->title((string) $data['title']);
+        }
+        if (!empty($data['meta_description'])) {
+            $seo->description((string) $data['meta_description']);
+        }
+        $seo->image((string) ($data['og_image'] ?? $logo));
+        if (!empty($data['seo_type'])) {
+            $seo->type((string) $data['seo_type']);
+        }
+        if (!empty($data['seo_keywords'])) {
+            $seo->keywords((string) $data['seo_keywords']);
+        }
+        // Private/thin areas are noindex by default; a view may force indexing
+        // with seo_index=true or opt in to noindex with seo_noindex=true.
+        if (!empty($data['seo_noindex']) || (Seo::shouldNoindex($request->path()) && empty($data['seo_index']))) {
+            $seo->noindex(true);
+        }
+        if (!empty($data['breadcrumbs']) && is_array($data['breadcrumbs'])) {
+            /** @var list<array{name:string, url:string}> $crumbs */
+            $crumbs = $data['breadcrumbs'];
+            $seo->breadcrumbs($crumbs);
+        }
+        if (!empty($data['schema']) && is_array($data['schema'])) {
+            foreach ($data['schema'] as $node) {
+                if (is_array($node)) {
+                    $seo->addSchema($node);
+                }
+            }
+        }
+
+        return $seo;
     }
 
     protected function redirect(string $to, int $status = 302): Response

@@ -31,7 +31,7 @@ final class Logger
         private string $path = 'storage/logs/app.log',
         string $minLevel = 'debug',
         ?string $requestId = null,
-        private string $service = 'sell.getxtra.in',
+        private string $service = 'code.getxtra.in',
         private string $env = 'production',
         private bool $stream = false,
     ) {

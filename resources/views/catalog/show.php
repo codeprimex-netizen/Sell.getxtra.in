@@ -9,7 +9,6 @@
  * @var array<int,array<string,mixed>> $related
  * @var array<int,array<string,mixed>> $recent
  * @var bool $wishlisted
- * @var string $jsonld
  * @var array<string,mixed>|null $auth_user
  * @var string $csrf_token
  */
@@ -35,8 +34,6 @@ $card = static function (array $p) use ($stars): string {
         . '</div></div></a>';
 };
 ?>
-<script type="application/ld+json" nonce="<?= e($csp_nonce ?? '') ?>"><?= $jsonld ?? '{}' ?></script>
-
 <div class="card wide">
   <h1><?= e((string) $product['title']) ?></h1>
   <p class="sub"><?= e((string) ($product['short_desc'] ?? '')) ?></p>

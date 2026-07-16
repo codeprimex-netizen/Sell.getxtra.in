@@ -1,7 +1,7 @@
-# Requirements — Sell.getxtra.in (Enterprise Edition)
+# Requirements — Code.getxtra.in (Enterprise Edition)
 
-**Project:** Sell.getxtra.in — Enterprise Digital Products Marketplace
-**Base URL:** https://www.sell.getxtra.in
+**Project:** Code.getxtra.in — Enterprise Digital Products Marketplace
+**Base URL:** https://www.code.getxtra.in
 **Developer:** ANSHU E-MITRA AND CSC CENTER
 **Tech Stack:** Core PHP 8.3+ (custom modular framework, PSR-4/PSR-12, no full framework), MySQL 8 (PDO, primary + read replicas), Redis (cache/session/queue), OpenSearch/Meilisearch (search), S3-compatible object storage + CDN, Nginx + PHP-FPM, Docker, CI/CD
 **Document Status:** Baseline v2.0 (Enterprise)
@@ -10,7 +10,7 @@
 
 ## 1. Introduction
 
-Sell.getxtra.in is an **enterprise-grade digital products marketplace** where verified sellers list and sell digital goods (scripts, themes, templates, plugins, source code, e-books, docs) and buyers discover, purchase, and securely download them. Although built on **custom Core PHP** (no Laravel/Symfony), it MUST meet enterprise expectations: high availability, horizontal scalability, strong security & compliance (OWASP ASVS, PCI-DSS SAQ-A, GDPR/DPDP), full observability, automated CI/CD, and a documented API surface.
+Code.getxtra.in is an **enterprise-grade digital products marketplace** where verified sellers list and sell digital goods (scripts, themes, templates, plugins, source code, e-books, docs) and buyers discover, purchase, and securely download them. Although built on **custom Core PHP** (no Laravel/Symfony), it MUST meet enterprise expectations: high availability, horizontal scalability, strong security & compliance (OWASP ASVS, PCI-DSS SAQ-A, GDPR/DPDP), full observability, automated CI/CD, and a documented API surface.
 
 ### 1.1 Goals
 - **Reliability:** 99.9% monthly uptime; graceful degradation.

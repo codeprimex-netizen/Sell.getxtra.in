@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# Sell.getxtra.in — PHP-FPM image (serves both web and worker roles)
+# Code.getxtra.in — PHP-FPM image (serves both web and worker roles)
 # ─────────────────────────────────────────────────────────────
 FROM php:8.3-fpm-alpine AS base
 

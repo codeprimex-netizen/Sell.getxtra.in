@@ -8,6 +8,8 @@ use App\Application\Catalog\CatalogService;
 use App\Application\Catalog\ProductMediaService;
 use App\Application\Catalog\RecentlyViewed;
 use App\Application\Review\WishlistService;
+use App\Application\Seo\StructuredData;
+use App\Config\Config;
 use App\Domain\Catalog\CategoryRepositoryInterface;
 use App\Domain\Review\ReviewRepositoryInterface;
 use App\Http\Controllers\Controller;
@@ -40,12 +42,28 @@ final class CatalogController extends Controller
         $page = max(1, (int) $request->query('page', 1));
         $perPage = 24;
 
+        $baseUrl = rtrim((string) Config::get('app.url', ''), '/');
+        $title = $category !== null ? (string) $category['name'] . ' — products' : 'Browse digital products';
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => $baseUrl . '/'],
+            ['name' => 'Products', 'url' => $baseUrl . '/products'],
+        ];
+        if ($category !== null) {
+            $breadcrumbs[] = ['name' => (string) $category['name'], 'url' => $baseUrl . '/products?category=' . rawurlencode($categorySlug)];
+        }
+
+        $products = $this->catalog->listApproved($categoryId, $perPage, ($page - 1) * $perPage);
+
         return $this->view($request, 'catalog.index', [
-            'products'        => $this->catalog->listApproved($categoryId, $perPage, ($page - 1) * $perPage),
-            'categories'      => $this->categories->allActive(),
-            'active_category' => $categorySlug,
-            'page'            => $page,
-            'wide'            => true,
+            'products'         => $products,
+            'categories'       => $this->categories->allActive(),
+            'active_category'  => $categorySlug,
+            'page'             => $page,
+            'wide'             => true,
+            'title'            => $title,
+            'meta_description' => 'Browse and buy premium digital products, code, templates and assets on ' . (string) Config::get('app.name', 'Code.getxtra.in') . '.',
+            'breadcrumbs'      => $breadcrumbs,
+            'schema'           => [StructuredData::itemList($products, $baseUrl, $title)],
         ]);
     }
 
@@ -71,44 +89,38 @@ final class CatalogController extends Controller
         $userId = $this->currentUserId($request);
         $wishlisted = $userId !== null && $this->wishlist->has($userId, $productId);
 
-        return $this->view($request, 'catalog.show', array_merge($bundle, [
-            'reviews'     => $this->reviews->publishedForProduct($productId),
-            'related'     => $this->catalog->related($product),
-            'recent'      => $recent,
-            'wishlisted'  => $wishlisted,
-            'screenshots' => $this->media->screenshots($productId), // resolved public URLs
-            'jsonld'      => $this->jsonLd($bundle),
-            'wide'        => true,
-        ]));
-    }
-
-    /** Build schema.org Product JSON-LD for SEO (Req 20.3). @param array<string,mixed> $bundle */
-    private function jsonLd(array $bundle): string
-    {
-        $product = $bundle['product'];
-        $data = [
-            '@context'    => 'https://schema.org',
-            '@type'       => 'Product',
-            'name'        => (string) $product['title'],
-            'description' => mb_substr(strip_tags((string) ($product['description'] ?? '')), 0, 300),
-            'sku'         => 'PROD-' . (int) $product['id'],
-            'image'       => (string) ($product['thumbnail_url'] ?? ''),
-            'offers'      => [
-                '@type'         => 'Offer',
-                'price'         => (string) $product['base_price'],
-                'priceCurrency' => (string) $product['currency'],
-                'availability'  => $bundle['purchasable'] ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            ],
+        // Advanced SEO for the product detail page.
+        $baseUrl = rtrim((string) Config::get('app.url', ''), '/');
+        $productUrl = $baseUrl . '/product/' . rawurlencode($slug);
+        $metaDescription = mb_substr(
+            trim(strip_tags((string) ($product['short_desc'] ?? $product['description'] ?? ''))),
+            0,
+            160,
+        );
+        $breadcrumbs = [
+            ['name' => 'Home', 'url' => $baseUrl . '/'],
+            ['name' => 'Products', 'url' => $baseUrl . '/products'],
+            ['name' => (string) $product['title'], 'url' => $productUrl],
         ];
+        $productNode = StructuredData::product(
+            array_merge($product, ['purchasable' => $bundle['purchasable']]),
+            $baseUrl,
+        );
 
-        if ((int) ($product['rating_count'] ?? 0) > 0) {
-            $data['aggregateRating'] = [
-                '@type'       => 'AggregateRating',
-                'ratingValue' => (string) $product['avg_rating'],
-                'reviewCount' => (int) $product['rating_count'],
-            ];
-        }
-
-        return (string) json_encode($data, JSON_UNESCAPED_SLASHES);
+        return $this->view($request, 'catalog.show', array_merge($bundle, [
+            'reviews'          => $this->reviews->publishedForProduct($productId),
+            'related'          => $this->catalog->related($product),
+            'recent'           => $recent,
+            'wishlisted'       => $wishlisted,
+            'screenshots'      => $this->media->screenshots($productId), // resolved public URLs
+            'wide'             => true,
+            'title'            => (string) $product['title'],
+            'meta_description' => $metaDescription,
+            'og_image'         => (string) ($product['thumbnail_url'] ?? ''),
+            'seo_type'         => 'product',
+            'canonical'        => $productUrl,
+            'breadcrumbs'      => $breadcrumbs,
+            'schema'           => [$productNode],
+        ]));
     }
 }

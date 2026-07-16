@@ -55,7 +55,7 @@ final class InvoiceService
         return [
             'number'    => (string) $order['order_number'],
             'currency'  => (string) $order['currency'],
-            'site'      => 'Sell.getxtra.in',
+            'site'      => 'Code.getxtra.in',
             'developer' => 'ANSHU E-MITRA AND CSC CENTER',
             'items'     => array_map(static fn (array $i): array => [
                 'title' => (string) $i['title_snapshot'],

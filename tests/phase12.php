@@ -202,13 +202,13 @@ $check('a throwing probe is caught and marked unhealthy', $r3['ready'] === false
 // ── Structured logging ─────────────────────────────────────────────
 echo "\n-- Structured logging --\n";
 $logPath = $tmp . '/app.log';
-$logger = new Logger($logPath, 'debug', 'req-abc', 'sell.getxtra.in', 'test');
+$logger = new Logger($logPath, 'debug', 'req-abc', 'code.getxtra.in', 'test');
 $logger->info('hello', ['k' => 'v']);
 $line = trim((string) file_get_contents($logPath));
 $record = json_decode($line, true);
 $check('log line is valid JSON', is_array($record));
 $check('log carries correlation id', ($record['request_id'] ?? '') === 'req-abc');
-$check('log carries service + env', ($record['service'] ?? '') === 'sell.getxtra.in' && ($record['env'] ?? '') === 'test');
+$check('log carries service + env', ($record['service'] ?? '') === 'code.getxtra.in' && ($record['env'] ?? '') === 'test');
 $check('log carries level + context', ($record['level'] ?? '') === 'info' && ($record['context']['k'] ?? '') === 'v');
 $logger->setRequestId('req-xyz');
 $logger->error('boom');

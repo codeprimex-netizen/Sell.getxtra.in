@@ -1,13 +1,13 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Sell.getxtra.in Public API",
+    "title": "Code.getxtra.in Public API",
     "version": "1.0.0",
-    "description": "Versioned REST API for the Sell.getxtra.in digital-products marketplace. All responses use a consistent JSON envelope: successful responses wrap the payload in `data` with a `meta` object; errors return an `error` object with a stable `code`. Authenticated endpoints use a Bearer API key with scopes. Developed by ANSHU E-MITRA AND CSC CENTER.",
+    "description": "Versioned REST API for the Code.getxtra.in digital-products marketplace. All responses use a consistent JSON envelope: successful responses wrap the payload in `data` with a `meta` object; errors return an `error` object with a stable `code`. Authenticated endpoints use a Bearer API key with scopes. Developed by ANSHU E-MITRA AND CSC CENTER.",
     "contact": { "name": "ANSHU E-MITRA AND CSC CENTER" }
   },
   "servers": [
-    { "url": "https://www.sell.getxtra.in", "description": "Production" }
+    { "url": "https://www.code.getxtra.in", "description": "Production" }
   ],
   "components": {
     "securitySchemes": {

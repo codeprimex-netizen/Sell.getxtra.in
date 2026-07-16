@@ -15,13 +15,14 @@ final class SitemapGenerator
     }
 
     /**
-     * @param array<int, array{path:string, lastmod?:string, changefreq?:string, priority?:string}> $urls
+     * @param array<int, array{path:string, lastmod?:string, changefreq?:string, priority?:string, images?:array<int,string>}> $urls
      */
     public function generate(array $urls): string
     {
         $base = rtrim($this->baseUrl, '/');
         $out = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
-        $out .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+        $out .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"' . "\n";
+        $out .= '        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">' . "\n";
 
         foreach ($urls as $url) {
             $loc = $base . '/' . ltrim((string) $url['path'], '/');
@@ -32,6 +33,12 @@ final class SitemapGenerator
             }
             $out .= '    <changefreq>' . $this->esc((string) ($url['changefreq'] ?? 'weekly')) . '</changefreq>' . "\n";
             $out .= '    <priority>' . $this->esc((string) ($url['priority'] ?? '0.5')) . '</priority>' . "\n";
+            foreach ($url['images'] ?? [] as $image) {
+                if ((string) $image === '') {
+                    continue;
+                }
+                $out .= '    <image:image><image:loc>' . $this->esc((string) $image) . '</image:loc></image:image>' . "\n";
+            }
             $out .= '  </url>' . "\n";
         }
 
@@ -41,9 +48,9 @@ final class SitemapGenerator
     /**
      * Assemble storefront URLs: static pages + product detail + category pages.
      *
-     * @param array<int, array{slug:string, updated_at?:string}> $products
+     * @param array<int, array{slug:string, updated_at?:string, thumbnail_url?:string}> $products
      * @param array<int, array{slug:string}> $categories
-     * @return array<int, array{path:string, lastmod?:string, changefreq?:string, priority?:string}>
+     * @return array<int, array{path:string, lastmod?:string, changefreq?:string, priority?:string, images?:array<int,string>}>
      */
     public function storefrontUrls(array $products, array $categories): array
     {
@@ -64,6 +71,9 @@ final class SitemapGenerator
             $entry = ['path' => 'product/' . rawurlencode((string) $product['slug']), 'changefreq' => 'weekly', 'priority' => '0.8'];
             if (!empty($product['updated_at'])) {
                 $entry['lastmod'] = substr((string) $product['updated_at'], 0, 10);
+            }
+            if (!empty($product['thumbnail_url'])) {
+                $entry['images'] = [(string) $product['thumbnail_url']];
             }
             $urls[] = $entry;
         }

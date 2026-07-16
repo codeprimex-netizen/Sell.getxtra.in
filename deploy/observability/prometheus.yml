@@ -1,11 +1,11 @@
-# Prometheus scrape + alerting configuration for Sell.getxtra.in (Req 15.2/15.6).
+# Prometheus scrape + alerting configuration for Code.getxtra.in (Req 15.2/15.6).
 # Scrapes the app's /metrics endpoint and loads the alert rules in alerts.yml.
 
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
   external_labels:
-    service: sell.getxtra.in
+    service: code.getxtra.in
 
 rule_files:
   - alerts.yml

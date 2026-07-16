@@ -33,7 +33,7 @@ final class MfaService
     public function beginEnrollment(string $accountEmail): array
     {
         $secret = $this->totp->generateSecret();
-        $issuer = (string) Config::get('app.name', 'Sell.getxtra.in');
+        $issuer = (string) Config::get('app.name', 'Code.getxtra.in');
 
         return [
             'secret' => $secret,

@@ -16,8 +16,8 @@ $flashError = $flash_error ?? null;
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= e($title ?? $app_name) ?></title>
-  <?php if (!empty($canonical)): ?><link rel="canonical" href="<?= e((string) $canonical) ?>"><?php endif; ?>
-  <?php if (!empty($meta_description)): ?><meta name="description" content="<?= e((string) $meta_description) ?>"><?php endif; ?>
+  <?php /* Advanced SEO: canonical, robots, hreflang, Open Graph, Twitter, JSON-LD (@graph). */ ?>
+  <?= $seo_head ?? '' ?>
   <style>
     :root{color-scheme:dark}
     *{box-sizing:border-box}
@@ -54,6 +54,7 @@ $flashError = $flash_error ?? null;
     <a class="brand" href="/"><?= e($app_name) ?></a>
     <nav>
       <a href="/products">Browse</a>
+      <a href="/faq">Help</a>
       <?php if ($authUser !== null): ?>
         <a href="/dashboard">Dashboard</a>
         <a href="/seller/products">Sell</a>

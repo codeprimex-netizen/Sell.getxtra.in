@@ -1,7 +1,7 @@
-# Design — Sell.getxtra.in (Enterprise Edition)
+# Design — Code.getxtra.in (Enterprise Edition)
 
-**Project:** Sell.getxtra.in — Enterprise Digital Products Marketplace
-**Base URL:** https://www.sell.getxtra.in
+**Project:** Code.getxtra.in — Enterprise Digital Products Marketplace
+**Base URL:** https://www.code.getxtra.in
 **Developer:** ANSHU E-MITRA AND CSC CENTER
 **Stack:** Core PHP 8.3+ (custom modular, PSR-4/PSR-12), MySQL 8 (primary + read replicas, PDO), Redis, OpenSearch/Meilisearch, S3-compatible storage + CDN, Nginx + PHP-FPM, Docker, CI/CD
 **Document Status:** Baseline v2.0 (Enterprise) — realizes REQUIREMENTS.md
@@ -10,7 +10,7 @@
 
 ## 1. Architecture Overview
 
-Sell.getxtra.in is a **modular monolith** (domain-oriented modules in one deployable) with a strict **layered architecture** and clean separation of concerns. It is designed to be **stateless** at the web tier so it can scale horizontally behind a load balancer, with Redis for shared state, MySQL for durable data (primary + replicas), object storage + CDN for files/media, a search engine for discovery, and a queue + workers for async work.
+Code.getxtra.in is a **modular monolith** (domain-oriented modules in one deployable) with a strict **layered architecture** and clean separation of concerns. It is designed to be **stateless** at the web tier so it can scale horizontally behind a load balancer, with Redis for shared state, MySQL for durable data (primary + replicas), object storage + CDN for files/media, a search engine for discovery, and a queue + workers for async work.
 
 > Modular monolith is chosen over microservices for delivery speed and operational simplicity, while module boundaries keep a future extraction path open.
 
@@ -83,7 +83,7 @@ Sell.getxtra.in is a **modular monolith** (domain-oriented modules in one deploy
 ## 2. Directory Structure (PSR-4)
 
 ```
-Sell.getxtra.in/
+Code.getxtra.in/
 ├── public/                          # Web root (only this is exposed)
 │   ├── index.php                    # Front controller
 │   └── assets/                      # built/fingerprinted css,js (also on CDN)
