@@ -54,6 +54,13 @@ $check('PHP version check present and passing on this runtime', $phpCheck !== nu
 $check('pdo_mysql listed as required', (bool) array_filter($reqs, static fn ($c) => $c['name'] === 'PHP extension: pdo_mysql' && $c['required']));
 $check('requirementsSatisfied() true for the temp project', $installer->requirementsSatisfied($reqs) === true);
 
+// testDatabase failure paths (no live MySQL required).
+$check('testDatabase rejects an empty/invalid database name',
+    $installer->testDatabase(['host' => '127.0.0.1', 'database' => '', 'username' => 'u', 'password' => 'p'])['ok'] === false);
+$unreachable = $installer->testDatabase(['host' => '127.0.0.1', 'port' => 1, 'database' => 'x', 'username' => 'u', 'password' => 'p']);
+$check('testDatabase fails gracefully when the server is unreachable (no exception)',
+    $unreachable['ok'] === false && $unreachable['message'] !== '');
+
 // 2. App key --------------------------------------------------------
 $key = $installer->generateAppKey();
 $rawOk = str_starts_with($key, 'base64:') && strlen((string) base64_decode(substr($key, 7), true)) === 32;

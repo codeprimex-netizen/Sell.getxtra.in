@@ -96,6 +96,10 @@ $pubInstall = (string) @file_get_contents($root . '/public/install.php');
 $check('install.php has a friendly fatal handler + PHP version guard',
     str_contains($pubInstall, 'register_shutdown_function') && str_contains($pubInstall, 'PHP_VERSION_ID < 80200'));
 $check('install.php uses the bootstrap autoloader', str_contains($pubInstall, "/bootstrap/autoload.php"));
+$check('installer carries DB credentials forward as hidden fields',
+    str_contains($pubInstall, 'name="db_password"') && str_contains($pubInstall, 'name="db_username"'));
+$check('installer finalizes in a single POST (no session-only credentials)',
+    str_contains($pubInstall, "\$step === 'install'") && str_contains($pubInstall, "\$_POST['db_password']"));
 
 // ── bin/console ────────────────────────────────────────────────────
 $console = (string) @file_get_contents($root . '/bin/console');

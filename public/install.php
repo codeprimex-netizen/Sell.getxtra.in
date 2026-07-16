@@ -236,15 +236,52 @@ if ($step === 'requirements') {
     render('Requirements', $body, 1);
 }
 
-/* ── Step: database (form + test) ──────────────────────────────── */
+/**
+ * Render the configuration step. DB credentials are carried forward as hidden
+ * fields (not only in the session) so the final install request always has the
+ * exact values that just passed the connection test — this is what prevents
+ * the "using password: NO" failure caused by flaky sessions across redirects.
+ *
+ * @param array<string, mixed> $db
+ * @param array<string, mixed> $cfg
+ */
+$renderConfigure = static function (array $db, array $cfg, ?string $error) use ($tokenField): void {
+    $hidden = ''
+        . '<input type="hidden" name="db_host" value="' . esc($db['host'] ?? '127.0.0.1') . '">'
+        . '<input type="hidden" name="db_port" value="' . esc($db['port'] ?? '3306') . '">'
+        . '<input type="hidden" name="db_database" value="' . esc($db['database'] ?? '') . '">'
+        . '<input type="hidden" name="db_username" value="' . esc($db['username'] ?? '') . '">'
+        . '<input type="hidden" name="db_password" value="' . esc($db['password'] ?? '') . '">';
+    $err = $error !== null ? '<div class="alert err">' . esc($error) . '</div>' : '';
+
+    render('Configuration', ''
+        . '<h1>Site &amp; administrator</h1>'
+        . '<div class="alert ok">Database connection verified: <span class="mono">' . esc($db['database'] ?? '') . '</span></div>'
+        . '<p class="sub">These settings are written to <span class="mono">.env</span> and used to create your first admin account.</p>'
+        . $err
+        . '<form method="post">' . $tokenField
+        . '<input type="hidden" name="step" value="install">'
+        . $hidden
+        . '<label>Site URL</label><input name="app_url" value="' . esc($cfg['app_url'] ?? 'https://www.code.getxtra.in') . '" required>'
+        . '<div class="hint">The public base URL, e.g. https://www.code.getxtra.in</div>'
+        . '<label>Site name</label><input name="app_name" value="' . esc($cfg['app_name'] ?? 'Code.getxtra.in') . '" required>'
+        . '<label>Environment</label><select name="app_env"><option value="production">production (recommended)</option><option value="local">local</option></select>'
+        . '<hr style="border-color:#1e293b;margin:1.5rem 0">'
+        . '<label>Administrator name</label><input name="admin_name" value="' . esc($cfg['admin_name'] ?? 'Administrator') . '" required>'
+        . '<label>Administrator email</label><input type="email" name="admin_email" value="' . esc($cfg['admin_email'] ?? '') . '" required>'
+        . '<label>Administrator password</label><input type="password" name="admin_password" value="' . esc($cfg['admin_password'] ?? '') . '" required>'
+        . '<div class="hint">Minimum 10 characters. You can change it later.</div>'
+        . '<button type="submit">Install now &rarr;</button></form>', 3);
+};
+
+/* ── Step: database (form + connection test) ───────────────────── */
 
 if ($step === 'database') {
     $db = install_state()['db'] ?? [
-        'host' => '127.0.0.1', 'port' => '3306', 'database' => 'getxtrain_Codegetxdata',
+        'host' => 'localhost', 'port' => '3306', 'database' => 'getxtrain_Codegetxdata',
         'username' => 'getxtrain_Codegetuser', 'password' => '',
     ];
 
-    // Submitted for testing.
     if ($method === 'POST' && isset($_POST['host']) && $error === null) {
         $db = [
             'host'     => trim((string) $_POST['host']),
@@ -256,8 +293,9 @@ if ($step === 'database') {
         $result = $installer->testDatabase($db);
         if ($result['ok']) {
             install_store(['db' => $db]);
-            header('Location: ?step=configure');
-            exit;
+            // Go straight into configuration in the SAME request, carrying the
+            // verified credentials forward as hidden fields.
+            $renderConfigure($db, install_state()['config'] ?? [], null);
         }
         $error = $result['message'];
     }
@@ -265,7 +303,7 @@ if ($step === 'database') {
     $err = $error !== null ? '<div class="alert err">' . esc($error) . '</div>' : '';
     render('Database', ''
         . '<h1>Database connection</h1>'
-        . '<p class="sub">Enter your MySQL details. The database will be created automatically if it does not exist.</p>'
+        . '<p class="sub">Enter your MySQL details. On cPanel create the database and user first (MySQL Databases), add the user with ALL PRIVILEGES, and use host <span class="mono">localhost</span>.</p>'
         . $err
         . '<form method="post">' . $tokenField
         . '<input type="hidden" name="step" value="database">'
@@ -274,85 +312,62 @@ if ($step === 'database') {
         . '<label>Database name</label><input name="database" value="' . esc($db['database']) . '" required>'
         . '<label>Username</label><input name="username" value="' . esc($db['username']) . '" required>'
         . '<label>Password</label><input type="password" name="password" value="' . esc($db['password']) . '">'
+        . '<div class="hint">Leave nothing blank unless your database user truly has no password.</div>'
         . '<button type="submit">Test connection &amp; continue &rarr;</button></form>', 2);
 }
 
-/* ── Step: configuration (site + admin) ────────────────────────── */
+/* ── Step: configuration (GET fallback / direct navigation) ────── */
 
 if ($step === 'configure') {
-    if (empty(install_state()['db'])) {
+    $db = install_state()['db'] ?? null;
+    if ($db === null || $db === []) {
         header('Location: ?step=database');
         exit;
     }
-
-    $cfg = install_state()['config'] ?? [
-        'app_url' => 'https://www.code.getxtra.in',
-        'app_name' => 'Code.getxtra.in',
-        'admin_name' => 'Administrator',
-        'admin_email' => '',
-    ];
-
-    if ($method === 'POST' && isset($_POST['app_url']) && $error === null) {
-        header('Location: ?step=finish');
-        // Persist first, then finalize on the finish step.
-        install_store(['config' => [
-            'app_url'     => trim((string) $_POST['app_url']),
-            'app_name'    => trim((string) $_POST['app_name']),
-            'app_env'     => ($_POST['app_env'] ?? 'production') === 'production' ? 'production' : 'local',
-            'admin_name'  => trim((string) $_POST['admin_name']),
-            'admin_email' => trim((string) $_POST['admin_email']),
-            'admin_password' => (string) ($_POST['admin_password'] ?? ''),
-        ]]);
-        exit;
-    }
-
-    render('Configuration', ''
-        . '<h1>Site &amp; administrator</h1>'
-        . '<p class="sub">These settings are written to <span class="mono">.env</span> and used to create your first admin account.</p>'
-        . '<form method="post">' . $tokenField
-        . '<input type="hidden" name="step" value="configure">'
-        . '<label>Site URL</label><input name="app_url" value="' . esc($cfg['app_url']) . '" required>'
-        . '<div class="hint">The public base URL, e.g. https://www.code.getxtra.in</div>'
-        . '<label>Site name</label><input name="app_name" value="' . esc($cfg['app_name']) . '" required>'
-        . '<label>Environment</label><select name="app_env"><option value="production">production (recommended)</option><option value="local">local</option></select>'
-        . '<hr style="border-color:#1e293b;margin:1.5rem 0">'
-        . '<label>Administrator name</label><input name="admin_name" value="' . esc($cfg['admin_name']) . '" required>'
-        . '<label>Administrator email</label><input type="email" name="admin_email" value="' . esc($cfg['admin_email']) . '" required>'
-        . '<label>Administrator password</label><input type="password" name="admin_password" required>'
-        . '<div class="hint">Minimum 10 characters. You can change it later.</div>'
-        . '<button type="submit">Review &amp; install &rarr;</button></form>', 3);
+    $renderConfigure($db, install_state()['config'] ?? [], null);
 }
 
-/* ── Step: finish (run installer) ──────────────────────────────── */
+/* ── Step: install (single-request finalize) ───────────────────── */
 
-if ($step === 'finish') {
-    $state = install_state();
-    $db = (array) ($state['db'] ?? []);
-    $cfg = (array) ($state['config'] ?? []);
+if ($step === 'install' && $method === 'POST' && $error === null) {
+    $sessionDb = install_state()['db'] ?? [];
 
-    if ($db === [] || $cfg === []) {
-        header('Location: ?step=welcome');
-        exit;
-    }
+    // DB credentials come from the POSTed hidden fields (reliable), falling
+    // back to the session only if a field is somehow absent.
+    $db = [
+        'host'     => trim((string) ($_POST['db_host'] ?? $sessionDb['host'] ?? 'localhost')),
+        'port'     => (string) ((int) ($_POST['db_port'] ?? $sessionDb['port'] ?? 3306)),
+        'database' => trim((string) ($_POST['db_database'] ?? $sessionDb['database'] ?? '')),
+        'username' => trim((string) ($_POST['db_username'] ?? $sessionDb['username'] ?? '')),
+        'password' => (string) ($_POST['db_password'] ?? $sessionDb['password'] ?? ''),
+    ];
+    $cfg = [
+        'app_url'        => trim((string) ($_POST['app_url'] ?? 'https://www.code.getxtra.in')),
+        'app_name'       => trim((string) ($_POST['app_name'] ?? 'Code.getxtra.in')),
+        'app_env'        => ($_POST['app_env'] ?? 'production') === 'production' ? 'production' : 'local',
+        'admin_name'     => trim((string) ($_POST['admin_name'] ?? '')),
+        'admin_email'    => trim((string) ($_POST['admin_email'] ?? '')),
+        'admin_password' => (string) ($_POST['admin_password'] ?? ''),
+    ];
+    install_store(['db' => $db, 'config' => $cfg]); // resilience only
 
     try {
         $log = $installer->run([
-            'db' => $db,
+            'db'  => $db,
             'app' => [
-                'url'   => (string) ($cfg['app_url'] ?? 'https://www.code.getxtra.in'),
-                'name'  => (string) ($cfg['app_name'] ?? 'Code.getxtra.in'),
-                'env'   => (string) ($cfg['app_env'] ?? 'production'),
-                'debug' => ($cfg['app_env'] ?? 'production') !== 'production',
+                'url'   => $cfg['app_url'],
+                'name'  => $cfg['app_name'],
+                'env'   => $cfg['app_env'],
+                'debug' => $cfg['app_env'] !== 'production',
             ],
             'admin' => [
-                'name'     => (string) ($cfg['admin_name'] ?? ''),
-                'email'    => (string) ($cfg['admin_email'] ?? ''),
-                'password' => (string) ($cfg['admin_password'] ?? ''),
+                'name'     => $cfg['admin_name'],
+                'email'    => $cfg['admin_email'],
+                'password' => $cfg['admin_password'],
             ],
         ]);
 
-        // Clear collected data (esp. passwords) from the session.
-        unset($_SESSION['install']);
+        unset($_SESSION['install']); // clear collected data (incl. passwords)
 
         $items = '';
         foreach ($log as $line) {
@@ -366,13 +381,8 @@ if ($step === 'finish') {
             . '<div class="alert err" style="margin-top:1.25rem">Security: delete <span class="mono">install.php</span> and <span class="mono">public/install.php</span> from your server now.</div>'
             . '<p style="margin-top:1rem"><a href="/login">&rarr; Log in to the admin</a> &middot; <a href="/">Visit the storefront</a></p>', 4);
     } catch (Throwable $e) {
-        render('Installation failed', ''
-            . '<h1>Installation failed</h1>'
-            . '<p class="sub">No lock file was written; you can fix the issue and retry.</p>'
-            . '<div class="alert err">' . esc($e->getMessage()) . '</div>'
-            . '<form method="post">' . $tokenField
-            . '<input type="hidden" name="step" value="configure">'
-            . '<button type="submit">&larr; Back to configuration</button></form>', 3);
+        // Re-render configuration with the error, preserving credentials + input.
+        $renderConfigure($db, $cfg, $e->getMessage());
     }
 }
 

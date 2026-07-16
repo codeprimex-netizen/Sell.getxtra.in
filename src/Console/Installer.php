@@ -168,7 +168,10 @@ final class Installer
     }
 
     /**
-     * Test the connection and create the schema database if it does not exist.
+     * Verify the database connection, working on both cPanel-style hosting
+     * (where the database is pre-created and the user is scoped to it, without
+     * global CREATE privilege) and privileged/root setups (where we can create
+     * the database on demand). Returns actionable messages on failure.
      *
      * @param array{host:string, port?:int|string, database:string, username:string, password?:string} $db
      * @return array{ok:bool, message:string}
@@ -180,16 +183,64 @@ final class Installer
             return ['ok' => false, 'message' => 'Invalid database name — use letters, digits and underscores only.'];
         }
 
+        // Preferred path (also the cPanel path): connect straight to the target
+        // database. If the user is correctly granted on an existing DB, this
+        // succeeds without needing any CREATE privilege.
         try {
-            $pdo = $this->connect($db, false);
-            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            // Confirm we can actually select it.
-            $pdo->exec("USE `{$name}`");
+            $pdo = $this->connect(array_merge($db, ['database' => $name]), true);
             $version = (string) $pdo->query('SELECT VERSION()')->fetchColumn();
             return ['ok' => true, 'message' => "Connected to MySQL {$version}. Database `{$name}` is ready."];
-        } catch (Throwable $e) {
-            return ['ok' => false, 'message' => $e->getMessage()];
+        } catch (\PDOException $e) {
+            $driverCode = (int) ($e->errorInfo[1] ?? 0);
+
+            // Credentials / grant problem — give precise, host-aware guidance.
+            if (in_array($driverCode, [1045, 1044, 1698], true)) {
+                return ['ok' => false, 'message' => $this->accessDeniedHint($db)];
+            }
+
+            // Auth OK but the database is missing: try to create it (works for
+            // privileged users; cPanel users typically cannot, so instruct).
+            if ($driverCode === 1049) {
+                try {
+                    $server = $this->connect($db, false);
+                    $server->exec("CREATE DATABASE IF NOT EXISTS `{$name}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                    return ['ok' => true, 'message' => "Connected. Database `{$name}` was created and is ready."];
+                } catch (\Throwable) {
+                    return ['ok' => false, 'message' =>
+                        "The database `{$name}` does not exist and this user cannot create it. "
+                        . 'Create the database first (cPanel → MySQL Databases → Create New Database), add your '
+                        . 'user to it with ALL PRIVILEGES, then try again.'];
+                }
+            }
+
+            return ['ok' => false, 'message' => 'Database error: ' . $e->getMessage()];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => 'Database error: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * Build a precise "access denied" hint, distinguishing a missing password
+     * (the "using password: NO" case) from a wrong password / missing grant.
+     *
+     * @param array<string, mixed> $db
+     */
+    private function accessDeniedHint(array $db): string
+    {
+        $user = (string) ($db['username'] ?? '');
+        $host = (string) ($db['host'] ?? 'localhost');
+        $hasPassword = ((string) ($db['password'] ?? '')) !== '';
+
+        $msg = "Access denied for database user '{$user}'. ";
+        if (!$hasPassword) {
+            $msg .= 'No password was sent — please enter the database user\'s password (the field was empty). ';
+        } else {
+            $msg .= 'The username or password is incorrect, or the user is not attached to this database. '
+                . 'In cPanel: MySQL Databases → "Add User To Database" → grant ALL PRIVILEGES. ';
+        }
+        $msg .= "On cPanel the host is usually \"localhost\". (user='{$user}', host='{$host}')";
+
+        return $msg;
     }
 
     private function sanitizeDbName(string $name): string
