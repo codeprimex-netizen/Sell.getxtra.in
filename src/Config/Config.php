@@ -25,10 +25,10 @@ final class Config
 
         self::$items = [
             'app' => [
-                'name'     => Env::get('APP_NAME', 'Sell.getxtra.in'),
+                'name'     => Env::get('APP_NAME', 'Code.getxtra.in'),
                 'env'      => Env::get('APP_ENV', 'production'),
                 'debug'    => (bool) Env::get('APP_DEBUG', false),
-                'url'      => Env::get('APP_URL', 'https://sell.getxtra.in'),
+                'url'      => Env::get('APP_URL', 'https://www.code.getxtra.in'),
                 'key'      => Env::get('APP_KEY', ''),
                 'timezone' => Env::get('APP_TIMEZONE', 'UTC'),
                 'locale'           => Env::get('APP_LOCALE', 'en'),
@@ -51,8 +51,8 @@ final class Config
                 'username'     => Env::get('MAIL_USERNAME', ''),
                 'password'     => Env::get('MAIL_PASSWORD', ''),
                 'encryption'   => Env::get('MAIL_ENCRYPTION', 'tls'),  // tls | ssl | none
-                'from_address' => Env::get('MAIL_FROM_ADDRESS', 'no-reply@sell.getxtra.in'),
-                'from_name'    => Env::get('MAIL_FROM_NAME', 'Sell.getxtra.in'),
+                'from_address' => Env::get('MAIL_FROM_ADDRESS', 'no-reply@code.getxtra.in'),
+                'from_name'    => Env::get('MAIL_FROM_NAME', 'Code.getxtra.in'),
                 'log_path'     => Env::get('MAIL_LOG_PATH', 'storage/logs/mail.log'),
             ],
             'affiliate' => [
@@ -63,7 +63,7 @@ final class Config
             'db' => [
                 'host'      => Env::get('DB_HOST', '127.0.0.1'),
                 'port'      => (int) Env::get('DB_PORT', 3306),
-                'database'  => Env::get('DB_DATABASE', 'sell_getxtra'),
+                'database'  => Env::get('DB_DATABASE', 'code_getxtra'),
                 'username'  => Env::get('DB_USERNAME', 'root'),
                 'password'  => Env::get('DB_PASSWORD', ''),
                 'charset'   => Env::get('DB_CHARSET', 'utf8mb4'),

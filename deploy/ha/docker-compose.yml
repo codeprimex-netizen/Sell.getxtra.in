@@ -1,4 +1,4 @@
-# High-availability topology for Sell.getxtra.in (Req 17.1–17.3).
+# High-availability topology for Code.getxtra.in (Req 17.1–17.3).
 #
 # - Stateless web tier (scale with --scale web=N) behind an nginx load balancer;
 #   sessions + cache live in Redis so any node can serve any request.
@@ -59,7 +59,7 @@ services:
       - "--gtid-mode=ON"
       - "--enforce-gtid-consistency=ON"
     environment:
-      MYSQL_DATABASE: sell_getxtra
+      MYSQL_DATABASE: code_getxtra
     volumes: [primary-data:/var/lib/mysql]
 
   mysql-replica:

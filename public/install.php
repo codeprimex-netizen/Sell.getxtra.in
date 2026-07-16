@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Web-based installation wizard for Sell.getxtra.in.
+ * Web-based installation wizard for Code.getxtra.in.
  *
  * A self-contained front controller (it does NOT boot the full application,
  * because a fresh box has no .env yet) that walks the operator through:
@@ -61,7 +61,7 @@ function render(string $title, string $body, int $activeStep): void
     header('Content-Type: text/html; charset=utf-8');
     echo '<!doctype html><html lang="en"><head><meta charset="utf-8">';
     echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
-    echo '<title>' . esc($title) . ' · Sell.getxtra.in Installer</title>';
+    echo '<title>' . esc($title) . ' · Code.getxtra.in Installer</title>';
     echo '<style>'
         . ':root{color-scheme:dark}*{box-sizing:border-box}'
         . 'body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}'
@@ -92,7 +92,7 @@ function render(string $title, string $body, int $activeStep): void
         . '.mono{font-family:ui-monospace,Menlo,monospace;background:#0b1220;border:1px solid #334155;border-radius:8px;padding:.6rem;word-break:break-all;font-size:.82rem}'
         . 'ul{margin:.4rem 0 0;padding-left:1.1rem}li{margin:.25rem 0;font-size:.9rem}'
         . '</style></head><body><div class="wrap">';
-    echo '<div class="brand">Sell.getxtra.in</div>';
+    echo '<div class="brand">Code.getxtra.in</div>';
     echo '<div class="tagline">Enterprise digital-products marketplace — guided installer</div>';
     echo '<div class="steps">';
     foreach ($steps as $i => $label) {
@@ -142,7 +142,7 @@ if ($step === 'welcome') {
         . '<ul>'
         . '<li>MySQL 8+ database credentials (host, name, user, password)</li>'
         . '<li>Write access to the project directory and <span class="mono">storage/</span></li>'
-        . '<li>Your desired site URL (default <span class="mono">https://sell.getxtra.in</span>) and admin email</li>'
+        . '<li>Your desired site URL (default <span class="mono">https://www.code.getxtra.in</span>) and admin email</li>'
         . '</ul>'
         . '<form method="post">' . $tokenField
         . '<input type="hidden" name="step" value="requirements">'
@@ -187,7 +187,7 @@ if ($step === 'requirements') {
 
 if ($step === 'database') {
     $db = install_state()['db'] ?? [
-        'host' => '127.0.0.1', 'port' => '3306', 'database' => 'sell_getxtra',
+        'host' => '127.0.0.1', 'port' => '3306', 'database' => 'code_getxtra',
         'username' => '', 'password' => '',
     ];
 
@@ -233,8 +233,8 @@ if ($step === 'configure') {
     }
 
     $cfg = install_state()['config'] ?? [
-        'app_url' => 'https://sell.getxtra.in',
-        'app_name' => 'Sell.getxtra.in',
+        'app_url' => 'https://www.code.getxtra.in',
+        'app_name' => 'Code.getxtra.in',
         'admin_name' => 'Administrator',
         'admin_email' => '',
     ];
@@ -259,7 +259,7 @@ if ($step === 'configure') {
         . '<form method="post">' . $tokenField
         . '<input type="hidden" name="step" value="configure">'
         . '<label>Site URL</label><input name="app_url" value="' . esc($cfg['app_url']) . '" required>'
-        . '<div class="hint">The public base URL, e.g. https://sell.getxtra.in</div>'
+        . '<div class="hint">The public base URL, e.g. https://www.code.getxtra.in</div>'
         . '<label>Site name</label><input name="app_name" value="' . esc($cfg['app_name']) . '" required>'
         . '<label>Environment</label><select name="app_env"><option value="production">production (recommended)</option><option value="local">local</option></select>'
         . '<hr style="border-color:#1e293b;margin:1.5rem 0">'
@@ -286,8 +286,8 @@ if ($step === 'finish') {
         $log = $installer->run([
             'db' => $db,
             'app' => [
-                'url'   => (string) ($cfg['app_url'] ?? 'https://sell.getxtra.in'),
-                'name'  => (string) ($cfg['app_name'] ?? 'Sell.getxtra.in'),
+                'url'   => (string) ($cfg['app_url'] ?? 'https://www.code.getxtra.in'),
+                'name'  => (string) ($cfg['app_name'] ?? 'Code.getxtra.in'),
                 'env'   => (string) ($cfg['app_env'] ?? 'production'),
                 'debug' => ($cfg['app_env'] ?? 'production') !== 'production',
             ],
@@ -308,7 +308,7 @@ if ($step === 'finish') {
 
         render('Done', ''
             . '<h1>Installation complete 🎉</h1>'
-            . '<p class="sub">Sell.getxtra.in is ready to use.</p>'
+            . '<p class="sub">Code.getxtra.in is ready to use.</p>'
             . '<div class="alert ok">What just happened:</div><ul>' . $items . '</ul>'
             . '<div class="alert err" style="margin-top:1.25rem">Security: delete <span class="mono">public/install.php</span> from your server now.</div>'
             . '<p style="margin-top:1rem"><a href="/login">&rarr; Log in to the admin</a> &middot; <a href="/">Visit the storefront</a></p>', 4);

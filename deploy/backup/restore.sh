@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restore Sell.getxtra.in from a logical dump, then optionally replay binlogs
+# Restore Code.getxtra.in from a logical dump, then optionally replay binlogs
 # to a point in time (Req 17.5 / 22.2). Target RTO <= 1h.
 #
 #   ./restore.sh /var/backups/sell-getxtra/db-20250101T000000Z.sql.gz ["2025-01-01 12:34:56"]

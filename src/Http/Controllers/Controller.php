@@ -27,7 +27,7 @@ abstract class Controller
         $session = $this->session($request);
 
         $shared = [
-            'app_name'      => (string) Config::get('app.name', 'Sell.getxtra.in'),
+            'app_name'      => (string) Config::get('app.name', 'Code.getxtra.in'),
             'auth_user'     => $request->attribute('auth_user'),
             'csrf_token'    => $session?->csrfToken() ?? '',
             'csp_nonce'     => (string) ($request->attribute('csp_nonce') ?? ''),

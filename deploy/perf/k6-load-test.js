@@ -1,8 +1,8 @@
-// k6 load test for Sell.getxtra.in (Req 16.5 / 24.3).
+// k6 load test for Code.getxtra.in (Req 16.5 / 24.3).
 //
 // Validates the product listing/search SLO: server-side P95 <= 400ms under
 // target load. Run:
-//   k6 run -e BASE_URL=https://staging.sell.getxtra.in deploy/perf/k6-load-test.js
+//   k6 run -e BASE_URL=https://staging.code.getxtra.in deploy/perf/k6-load-test.js
 //
 // CI gates on the thresholds below (k6 exits non-zero if breached).
 

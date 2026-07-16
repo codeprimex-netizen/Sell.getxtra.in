@@ -14,7 +14,7 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Advanced first-run installer for Sell.getxtra.in.
+ * Advanced first-run installer for Code.getxtra.in.
  *
  * Encapsulates every step of provisioning a fresh deployment so both the
  * web wizard (public/install.php) and the CLI (`php bin/console install`)
@@ -281,15 +281,15 @@ final class Installer
         $mail = (array) ($config['mail'] ?? []);
 
         $overrides = [
-            'APP_NAME'  => (string) ($app['name'] ?? 'Sell.getxtra.in'),
+            'APP_NAME'  => (string) ($app['name'] ?? 'Code.getxtra.in'),
             'APP_ENV'   => (string) ($app['env'] ?? 'production'),
             'APP_DEBUG' => !empty($app['debug']) ? 'true' : 'false',
-            'APP_URL'   => (string) ($app['url'] ?? 'https://sell.getxtra.in'),
+            'APP_URL'   => (string) ($app['url'] ?? 'https://www.code.getxtra.in'),
             'APP_KEY'   => $appKey,
 
             'DB_HOST'     => (string) ($db['host'] ?? '127.0.0.1'),
             'DB_PORT'     => (string) ((int) ($db['port'] ?? 3306)),
-            'DB_DATABASE' => (string) ($db['database'] ?? 'sell_getxtra'),
+            'DB_DATABASE' => (string) ($db['database'] ?? 'code_getxtra'),
             'DB_USERNAME' => (string) ($db['username'] ?? 'root'),
             'DB_PASSWORD' => (string) ($db['password'] ?? ''),
 
@@ -305,8 +305,8 @@ final class Installer
             $overrides['MAIL_USERNAME']     = (string) ($mail['username'] ?? '');
             $overrides['MAIL_PASSWORD']     = (string) ($mail['password'] ?? '');
             $overrides['MAIL_ENCRYPTION']   = (string) ($mail['encryption'] ?? 'tls');
-            $overrides['MAIL_FROM_ADDRESS'] = (string) ($mail['from_address'] ?? 'no-reply@sell.getxtra.in');
-            $overrides['MAIL_FROM_NAME']    = (string) ($mail['from_name'] ?? ($app['name'] ?? 'Sell.getxtra.in'));
+            $overrides['MAIL_FROM_ADDRESS'] = (string) ($mail['from_address'] ?? 'no-reply@code.getxtra.in');
+            $overrides['MAIL_FROM_NAME']    = (string) ($mail['from_name'] ?? ($app['name'] ?? 'Code.getxtra.in'));
         }
 
         return $overrides;
@@ -324,7 +324,7 @@ final class Installer
         $db = (array) ($config['db'] ?? []);
         Config::set('db.host', (string) ($db['host'] ?? '127.0.0.1'));
         Config::set('db.port', (int) ($db['port'] ?? 3306));
-        Config::set('db.database', (string) ($db['database'] ?? 'sell_getxtra'));
+        Config::set('db.database', (string) ($db['database'] ?? 'code_getxtra'));
         Config::set('db.username', (string) ($db['username'] ?? 'root'));
         Config::set('db.password', (string) ($db['password'] ?? ''));
         Config::set('db.charset', (string) ($db['charset'] ?? 'utf8mb4'));

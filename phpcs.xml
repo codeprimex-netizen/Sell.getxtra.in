@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<ruleset name="Sell.getxtra.in">
-    <description>Coding standard for Sell.getxtra.in — PSR-12 with pragmatic exclusions (Req 23.1).</description>
+<ruleset name="Code.getxtra.in">
+    <description>Coding standard for Code.getxtra.in — PSR-12 with pragmatic exclusions (Req 23.1).</description>
 
     <!-- What to scan. -->
     <file>src</file>

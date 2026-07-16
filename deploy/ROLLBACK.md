@@ -41,7 +41,7 @@ kubectl rollout undo deployment/sell-web --to-revision=<N>
 Re-deploy a specific known-good image without a new build via the CD
 `workflow_dispatch` input `image_tag`, or:
 ```bash
-kubectl set image deployment/sell-web web=ghcr.io/codeprimex-netizen/sell.getxtra.in:sha-<good>
+kubectl set image deployment/sell-web web=ghcr.io/codeprimex-netizen/code.getxtra.in:sha-<good>
 ```
 
 ## Post-rollback

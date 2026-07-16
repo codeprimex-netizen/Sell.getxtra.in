@@ -5,7 +5,7 @@ $old = $old ?? [];
 ?>
 <div class="card">
   <h1>Create your account</h1>
-  <p class="sub">Join Sell.getxtra.in to buy and sell digital products.</p>
+  <p class="sub">Join Code.getxtra.in to buy and sell digital products.</p>
 
   <form action="/register" method="post" novalidate>
     <input type="hidden" name="_token" value="<?= e($csrf_token) ?>">

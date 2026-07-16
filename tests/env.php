@@ -71,20 +71,20 @@ require_once $root . '/vendor/autoload.php';
 $tmp = tempnam(sys_get_temp_dir(), 'envtest');
 file_put_contents($tmp, implode("\n", [
     'APP_ENV=local  # local | staging | production',
-    'APP_NAME="Sell.getxtra.in"  # brand name',
+    'APP_NAME="Code.getxtra.in"  # brand name',
     'METRICS_TOKEN=                      # optional bearer token',
     "SESSION_COOKIE='sell_session'  # cookie",
     'API_TOKEN=abc#123def',
-    'APP_URL=https://sell.getxtra.in',
+    'APP_URL=https://www.code.getxtra.in',
 ]) . "\n");
 \App\Config\Env::load($tmp);
 @unlink($tmp);
 $check('inline comment stripped from unquoted value', \App\Config\Env::get('APP_ENV') === 'local', (string) \App\Config\Env::get('APP_ENV'));
-$check('inline comment ignored after quoted value', \App\Config\Env::get('APP_NAME') === 'Sell.getxtra.in', (string) \App\Config\Env::get('APP_NAME'));
+$check('inline comment ignored after quoted value', \App\Config\Env::get('APP_NAME') === 'Code.getxtra.in', (string) \App\Config\Env::get('APP_NAME'));
 $check('comment-only value resolves to empty (default applies)', \App\Config\Env::get('METRICS_TOKEN', 'DEFAULT') === 'DEFAULT');
 $check('single-quoted value unwrapped, trailing comment ignored', \App\Config\Env::get('SESSION_COOKIE') === 'sell_session', (string) \App\Config\Env::get('SESSION_COOKIE'));
 $check("'#' inside an unquoted value is preserved", \App\Config\Env::get('API_TOKEN') === 'abc#123def', (string) \App\Config\Env::get('API_TOKEN'));
-$check('plain URL value parsed intact', \App\Config\Env::get('APP_URL') === 'https://sell.getxtra.in', (string) \App\Config\Env::get('APP_URL'));
+$check('plain URL value parsed intact', \App\Config\Env::get('APP_URL') === 'https://www.code.getxtra.in', (string) \App\Config\Env::get('APP_URL'));
 
 echo "\nConfig keys: " . count($configKeys) . " | Documented: " . count($documented) . "\n";
 echo $failures === 0 ? "OK — env template is complete and clean.\n" : "FAILED — {$failures} check(s) failed.\n";

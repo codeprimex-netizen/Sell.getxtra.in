@@ -1,4 +1,4 @@
-# Sell.getxtra.in
+# Code.getxtra.in
 
 Enterprise digital-products marketplace — buy and sell themes, plugins, templates,
 UI kits and code, with instant, secure downloads and licensing.
@@ -7,7 +7,7 @@ Built in **custom Core PHP 8.x (no framework)** on **MySQL/PDO**, with a layered
 dependency-injected, PSR-4 architecture. Security, DI, routing, and reliability are
 engineered in-house and covered by automated tests.
 
-> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://sell.getxtra.in
+> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://www.code.getxtra.in
 
 ---
 
@@ -59,7 +59,7 @@ which checks requirements, creates the database, generates `APP_KEY`, writes
 `.env`, runs migrations + seeders, and creates your first admin account.
 
 **Option A — Web wizard.** After `composer install`, browse to
-`https://sell.getxtra.in/install.php` and follow the steps
+`https://www.code.getxtra.in/install.php` and follow the steps
 (welcome → requirements → database → configuration → finish). When it
 completes, **delete `public/install.php`** for security (a
 `storage/installed.lock` file also prevents re-runs).
@@ -69,10 +69,10 @@ completes, **delete `public/install.php`** for security (a
 ```bash
 composer install
 php bin/console install \
-  --db-host=127.0.0.1 --db-port=3306 --db-name=sell_getxtra \
+  --db-host=127.0.0.1 --db-port=3306 --db-name=code_getxtra \
   --db-user=root --db-pass=secret \
-  --url=https://sell.getxtra.in --name="Sell.getxtra.in" \
-  --admin-name="Admin" --admin-email=admin@sell.getxtra.in \
+  --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
+  --admin-name="Admin" --admin-email=admin@code.getxtra.in \
   --admin-password=change-me-please
 ```
 

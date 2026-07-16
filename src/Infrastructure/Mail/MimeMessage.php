@@ -63,7 +63,7 @@ final class MimeMessage
     {
         $domain = str_contains($this->fromAddress, '@')
             ? substr((string) strrchr($this->fromAddress, '@'), 1)
-            : 'sell.getxtra.in';
+            : 'code.getxtra.in';
         return '<' . bin2hex(random_bytes(12)) . '@' . $domain . '>';
     }
 }

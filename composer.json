@@ -1,6 +1,6 @@
 {
-    "name": "getxtra/sell",
-    "description": "Sell.getxtra.in - Enterprise Digital Products Marketplace (Custom PHP)",
+    "name": "getxtra/code",
+    "description": "Code.getxtra.in - Enterprise Digital Products Marketplace (Custom PHP)",
     "type": "project",
     "license": "proprietary",
     "require": {

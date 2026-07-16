@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Database + object-storage backup for Sell.getxtra.in (Req 17.5 / 22.2).
+# Database + object-storage backup for Code.getxtra.in (Req 17.5 / 22.2).
 #
 # Runs every 15 minutes via cron to meet RPO <= 15m:
 #   */15 * * * * /app/deploy/backup/backup.sh >> /var/log/backup.log 2>&1

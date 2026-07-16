@@ -149,8 +149,8 @@ $flags->setEnabled('affiliate_program', false);
 $check('feature flag disabled', !$flags->isEnabled('affiliate_program'));
 
 $settings = new InMemorySettingsRepository();
-$settings->set('support_email', 'help@sell.getxtra.in');
-$check('setting stored + retrieved', $settings->get('support_email') === 'help@sell.getxtra.in');
+$settings->set('support_email', 'help@code.getxtra.in');
+$check('setting stored + retrieved', $settings->get('support_email') === 'help@code.getxtra.in');
 
 // ── Reporting ─────────────────────────────────────────────────────
 $disputesRepo = new InMemoryDisputeRepository();

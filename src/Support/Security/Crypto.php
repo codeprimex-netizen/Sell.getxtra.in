@@ -76,7 +76,7 @@ final class Crypto
     private function normalizeKey(string $configured): string
     {
         if ($configured === '') {
-            $configured = 'sell.getxtra.in-insecure-dev-key';
+            $configured = 'code.getxtra.in-insecure-dev-key';
         }
         if (str_starts_with($configured, 'base64:')) {
             $decoded = base64_decode(substr($configured, 7), true);

@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: web
-          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          image: ghcr.io/codeprimex-netizen/code.getxtra.in:latest
           ports: [{ containerPort: 8080 }]
           envFrom:
             - configMapRef: { name: sell-config }

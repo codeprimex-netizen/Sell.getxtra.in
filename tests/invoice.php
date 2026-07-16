@@ -36,7 +36,7 @@ echo "=== Invoice rendering tests ===\n";
 $invoice = [
     'number'   => 'ORD-INV-1',
     'currency' => 'INR',
-    'site'     => 'Sell.getxtra.in',
+    'site'     => 'Code.getxtra.in',
     'developer' => 'ANSHU E-MITRA AND CSC CENTER',
     'items'    => [['title' => 'Pro Theme', 'price' => 999.00]],
     'subtotal' => 999.00, 'discount' => 0.0, 'tax' => 179.82, 'total' => 1178.82,

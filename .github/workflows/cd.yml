@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: staging
-      url: https://staging.sell.getxtra.in
+      url: https://staging.code.getxtra.in
     env:
       TAG: ${{ github.event.inputs.image_tag || needs.build-push.outputs.tag }}
     steps:
@@ -74,7 +74,7 @@ jobs:
           kubectl rollout status deployment/sell-web --timeout=300s
           kubectl rollout status deployment/sell-worker --timeout=300s
       - name: Smoke test
-        run: curl -fsS https://staging.sell.getxtra.in/readyz
+        run: curl -fsS https://staging.code.getxtra.in/readyz
 
   deploy-production:
     name: Deploy to production
@@ -84,7 +84,7 @@ jobs:
     # (configured in repo settings) before this job runs.
     environment:
       name: production
-      url: https://sell.getxtra.in
+      url: https://www.code.getxtra.in
     env:
       TAG: ${{ github.event.inputs.image_tag || needs.build-push.outputs.tag }}
     steps:
@@ -111,4 +111,4 @@ jobs:
           fi
           kubectl rollout status deployment/sell-worker --timeout=300s || kubectl rollout undo deployment/sell-worker
       - name: Post-deploy smoke test
-        run: curl -fsS https://sell.getxtra.in/readyz
+        run: curl -fsS https://www.code.getxtra.in/readyz

@@ -33,12 +33,12 @@ foreach (['', '/storage', '/storage/logs', '/storage/cache', '/storage/tmp', '/s
 }
 file_put_contents($base . '/.env.example', implode("\n", [
     '# Example env',
-    'APP_NAME="Sell.getxtra.in"',
+    'APP_NAME="Code.getxtra.in"',
     'APP_ENV=production',
-    'APP_URL=https://sell.getxtra.in  # base url',
+    'APP_URL=https://www.code.getxtra.in  # base url',
     'APP_KEY=',
     'DB_HOST=127.0.0.1                # db host',
-    'DB_DATABASE=sell_getxtra',
+    'DB_DATABASE=code_getxtra',
     'DB_USERNAME=root',
     'DB_PASSWORD=',
     'MAIL_DRIVER=log',
@@ -64,7 +64,7 @@ $check('two generated keys differ', $installer->generateAppKey() !== $installer-
 $example = (string) file_get_contents($base . '/.env.example');
 $overrides = $installer->buildEnvOverrides([
     'db'  => ['host' => 'db.internal', 'port' => 3307, 'database' => 'shop', 'username' => 'appuser', 'password' => 'p@ss word#1'],
-    'app' => ['url' => 'https://sell.getxtra.in', 'name' => 'Sell.getxtra.in', 'env' => 'production', 'debug' => false],
+    'app' => ['url' => 'https://www.code.getxtra.in', 'name' => 'Code.getxtra.in', 'env' => 'production', 'debug' => false],
 ], $key);
 $rendered = $installer->renderEnv($example, $overrides);
 
@@ -78,7 +78,7 @@ $check('rendered .env appends per-install secrets', str_contains($rendered, 'PAY
 $envFile = $base . '/.env';
 file_put_contents($envFile, $rendered);
 Env::load($envFile);
-$check('round-trip: APP_URL parsed intact', Env::get('APP_URL') === 'https://sell.getxtra.in', (string) Env::get('APP_URL'));
+$check('round-trip: APP_URL parsed intact', Env::get('APP_URL') === 'https://www.code.getxtra.in', (string) Env::get('APP_URL'));
 $check('round-trip: DB_HOST parsed intact', Env::get('DB_HOST') === 'db.internal', (string) Env::get('DB_HOST'));
 $check('round-trip: quoted password with space+hash preserved', Env::get('DB_PASSWORD') === 'p@ss word#1', (string) Env::get('DB_PASSWORD'));
 $check('round-trip: APP_KEY preserved', Env::get('APP_KEY') === $key);
@@ -95,14 +95,14 @@ $threw = static function (callable $fn): bool {
 $check('assertAdmin rejects empty name', $threw(static fn () => $installer->assertAdmin(['name' => '', 'email' => 'a@b.com', 'password' => 'longenough1'])));
 $check('assertAdmin rejects invalid email', $threw(static fn () => $installer->assertAdmin(['name' => 'A', 'email' => 'not-an-email', 'password' => 'longenough1'])));
 $check('assertAdmin rejects short password', $threw(static fn () => $installer->assertAdmin(['name' => 'A', 'email' => 'a@b.com', 'password' => 'short'])));
-$check('assertAdmin accepts valid input', !$threw(static fn () => $installer->assertAdmin(['name' => 'Admin', 'email' => 'admin@sell.getxtra.in', 'password' => 'a-strong-password'])));
+$check('assertAdmin accepts valid input', !$threw(static fn () => $installer->assertAdmin(['name' => 'Admin', 'email' => 'admin@code.getxtra.in', 'password' => 'a-strong-password'])));
 
 // 5. Lock lifecycle -------------------------------------------------
 $check('isInstalled() false before locking', $installer->isInstalled() === false);
-$installer->lock(['admin_email' => 'admin@sell.getxtra.in', 'app_url' => 'https://sell.getxtra.in']);
+$installer->lock(['admin_email' => 'admin@code.getxtra.in', 'app_url' => 'https://www.code.getxtra.in']);
 $check('isInstalled() true after lock()', $installer->isInstalled() === true);
 $lockData = json_decode((string) file_get_contents($installer->lockFile()), true);
-$check('lock file is valid JSON with metadata', is_array($lockData) && ($lockData['version'] ?? '') === '1.0.0' && ($lockData['admin_email'] ?? '') === 'admin@sell.getxtra.in');
+$check('lock file is valid JSON with metadata', is_array($lockData) && ($lockData['version'] ?? '') === '1.0.0' && ($lockData['admin_email'] ?? '') === 'admin@code.getxtra.in');
 $check('run() refuses when already installed (no --force)', $threw(static fn () => $installer->run(['db' => [], 'app' => [], 'admin' => []])));
 
 // Cleanup.

@@ -177,7 +177,7 @@ final class App
                 $path,
                 (string) Config::get('log.level', 'info'),
                 null,
-                (string) Config::get('app.name', 'sell.getxtra.in'),
+                (string) Config::get('app.name', 'code.getxtra.in'),
                 (string) Config::get('app.env', 'production'),
                 (bool) Config::get('log.stream', false),
             );
@@ -241,7 +241,7 @@ final class App
 
         // SEO sitemap generator (Req 20.3).
         $c->singleton(\App\Application\Seo\SitemapGenerator::class, static fn (): \App\Application\Seo\SitemapGenerator =>
-            new \App\Application\Seo\SitemapGenerator((string) Config::get('app.url', 'https://sell.getxtra.in')));
+            new \App\Application\Seo\SitemapGenerator((string) Config::get('app.url', 'https://www.code.getxtra.in')));
 
         // Session store: cache-backed (stateless tier) when configured, else native.
         $c->singleton(SessionStore::class, static function (Container $c): SessionStore {
@@ -543,8 +543,8 @@ final class App
             if ((string) Config::get('mail.driver', 'log') === 'smtp') {
                 $encryption = (string) Config::get('mail.encryption', 'tls');
                 $mime = new \App\Infrastructure\Mail\MimeMessage(
-                    (string) Config::get('mail.from_address', 'no-reply@sell.getxtra.in'),
-                    (string) Config::get('mail.from_name', 'Sell.getxtra.in'),
+                    (string) Config::get('mail.from_address', 'no-reply@code.getxtra.in'),
+                    (string) Config::get('mail.from_name', 'Code.getxtra.in'),
                 );
                 return new \App\Infrastructure\Mail\SmtpMailer(
                     new \App\Infrastructure\Mail\Smtp\StreamSmtpConnection(
@@ -553,7 +553,7 @@ final class App
                         $encryption,
                     ),
                     $mime,
-                    (string) Config::get('mail.from_address', 'no-reply@sell.getxtra.in'),
+                    (string) Config::get('mail.from_address', 'no-reply@code.getxtra.in'),
                     $encryption,
                     (string) Config::get('mail.username', ''),
                     (string) Config::get('mail.password', ''),

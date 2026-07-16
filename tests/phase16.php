@@ -80,14 +80,14 @@ $check('no signal uses the default locale', $resolve([]) === 'en');
 
 // ── SEO sitemap ────────────────────────────────────────────────────
 echo "\n-- SEO sitemap --\n";
-$gen = new SitemapGenerator('https://sell.getxtra.in');
+$gen = new SitemapGenerator('https://www.code.getxtra.in');
 $urls = $gen->storefrontUrls(
     [['slug' => 'nova-template', 'updated_at' => '2025-01-10 12:00:00'], ['slug' => 'pro-kit']],
     [['slug' => 'themes'], ['slug' => 'plugins']],
 );
 $xml = $gen->generate($urls);
 $check('sitemap is well-formed XML', simplexml_load_string($xml) !== false);
-$check('sitemap includes the homepage', str_contains($xml, '<loc>https://sell.getxtra.in/</loc>'));
+$check('sitemap includes the homepage', str_contains($xml, '<loc>https://www.code.getxtra.in/</loc>'));
 $check('sitemap includes product URLs', str_contains($xml, '/product/nova-template'));
 $check('sitemap includes category URLs', str_contains($xml, '/products?category=themes'));
 $check('sitemap carries lastmod when known', str_contains($xml, '<lastmod>2025-01-10</lastmod>'));

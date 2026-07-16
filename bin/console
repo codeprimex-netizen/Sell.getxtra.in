@@ -82,13 +82,13 @@ try {
                 'db' => [
                     'host'     => (string) ($opts['db-host'] ?? '127.0.0.1'),
                     'port'     => (int) ($opts['db-port'] ?? 3306),
-                    'database' => (string) ($opts['db-name'] ?? 'sell_getxtra'),
+                    'database' => (string) ($opts['db-name'] ?? 'code_getxtra'),
                     'username' => (string) ($opts['db-user'] ?? 'root'),
                     'password' => (string) ($opts['db-pass'] ?? ''),
                 ],
                 'app' => [
-                    'url'   => (string) ($opts['url'] ?? 'https://sell.getxtra.in'),
-                    'name'  => (string) ($opts['name'] ?? 'Sell.getxtra.in'),
+                    'url'   => (string) ($opts['url'] ?? 'https://www.code.getxtra.in'),
+                    'name'  => (string) ($opts['name'] ?? 'Code.getxtra.in'),
                     'env'   => (string) ($opts['env'] ?? 'production'),
                     'debug' => (string) ($opts['env'] ?? 'production') !== 'production',
                 ],
@@ -99,7 +99,7 @@ try {
                 ],
             ];
 
-            fwrite(STDOUT, "Installing Sell.getxtra.in…\n");
+            fwrite(STDOUT, "Installing Code.getxtra.in…\n");
             foreach ($installer->run($config, !empty($opts['force'])) as $line) {
                 fwrite(STDOUT, "  ✔ {$line}\n");
             }
@@ -137,7 +137,7 @@ try {
 
         default:
             fwrite(STDOUT, <<<TXT
-            Sell.getxtra.in console
+            Code.getxtra.in console
 
             Commands:
               install         Provision a fresh deployment (see options below)
@@ -150,10 +150,10 @@ try {
 
             Install (headless) example:
               php bin/console install \
-                --db-host=127.0.0.1 --db-port=3306 --db-name=sell_getxtra \
+                --db-host=127.0.0.1 --db-port=3306 --db-name=code_getxtra \
                 --db-user=root --db-pass=secret \
-                --url=https://sell.getxtra.in --name="Sell.getxtra.in" \
-                --admin-name="Admin" --admin-email=admin@sell.getxtra.in \
+                --url=https://www.code.getxtra.in --name="Code.getxtra.in" \
+                --admin-name="Admin" --admin-email=admin@code.getxtra.in \
                 --admin-password=change-me-please [--force]
 
             TXT);

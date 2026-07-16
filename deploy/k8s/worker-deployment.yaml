@@ -23,7 +23,7 @@ spec:
       terminationGracePeriodSeconds: 60   # let the current job finish
       containers:
         - name: worker
-          image: ghcr.io/codeprimex-netizen/sell.getxtra.in:latest
+          image: ghcr.io/codeprimex-netizen/code.getxtra.in:latest
           command: ["sh", "-c", "while true; do php bin/console queue:work; php bin/console schedule:run; sleep 5; done"]
           envFrom:
             - configMapRef: { name: sell-config }

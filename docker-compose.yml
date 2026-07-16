@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# Sell.getxtra.in — Local development stack
+# Code.getxtra.in — Local development stack
 #   web   : Nginx  -> app (PHP-FPM)
 #   app   : PHP-FPM front controller
 #   worker: queue worker (async jobs — used from Phase 9)
@@ -49,7 +49,7 @@ services:
   mysql:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-sell_getxtra}
+      MYSQL_DATABASE: ${DB_DATABASE:-code_getxtra}
       MYSQL_USER: ${DB_USERNAME:-sell}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}

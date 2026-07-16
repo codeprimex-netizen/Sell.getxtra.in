@@ -39,7 +39,7 @@ echo "=== Bootstrap smoke test ===\n";
 
 // 1. Home page.
 $res = $kernel->handle($make('GET', '/'));
-$check('GET / returns 200 HTML', $res->status() === 200 && str_contains($res->body(), 'Sell.getxtra.in'), 'status=' . $res->status());
+$check('GET / returns 200 HTML', $res->status() === 200 && str_contains($res->body(), 'Code.getxtra.in'), 'status=' . $res->status());
 $check('GET / has X-Request-Id header', isset($res->headers()['X-Request-Id']));
 $check('GET / has CSP header', isset($res->headers()['Content-Security-Policy']));
 

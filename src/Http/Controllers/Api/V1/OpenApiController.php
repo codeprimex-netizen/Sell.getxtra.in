@@ -30,7 +30,7 @@ final class OpenApiController extends ApiController
         }
 
         // Reflect the configured base URL so the spec is accurate per-environment.
-        $url = (string) Config::get('app.url', 'https://sell.getxtra.in');
+        $url = (string) Config::get('app.url', 'https://www.code.getxtra.in');
         $doc['servers'] = [['url' => $url, 'description' => (string) Config::get('app.env', 'production')]];
 
         return Response::json($doc);

@@ -60,9 +60,9 @@ echo "=== SMTP mailer tests ===\n";
 
 // ── MIME message ───────────────────────────────────────────────────
 echo "\n-- MIME message --\n";
-$mime = new MimeMessage('no-reply@sell.getxtra.in', 'Sell.getxtra.in');
+$mime = new MimeMessage('no-reply@code.getxtra.in', 'Code.getxtra.in');
 $msg = $mime->build('buyer@example.com', 'Your order is confirmed', '<h1>Thanks!</h1>');
-$check('has From with display name', str_contains($msg, 'From: "Sell.getxtra.in" <no-reply@sell.getxtra.in>'));
+$check('has From with display name', str_contains($msg, 'From: "Code.getxtra.in" <no-reply@code.getxtra.in>'));
 $check('has To', str_contains($msg, 'To: <buyer@example.com>'));
 $check('has Subject', str_contains($msg, 'Subject: Your order is confirmed'));
 $check('is MIME HTML base64', str_contains($msg, 'MIME-Version: 1.0')
@@ -71,7 +71,7 @@ $check('is MIME HTML base64', str_contains($msg, 'MIME-Version: 1.0')
 $check('uses CRLF + header/body separator', str_contains($msg, "\r\n\r\n"));
 [$headers, $body] = explode("\r\n\r\n", $msg, 2);
 $check('body decodes back to the HTML', base64_decode(str_replace("\r\n", '', $body)) === '<h1>Thanks!</h1>');
-$check('has a Message-ID', (bool) preg_match('/Message-ID: <[0-9a-f]{24}@sell\.getxtra\.in>/', $msg));
+$check('has a Message-ID', (bool) preg_match('/Message-ID: <[0-9a-f]{24}@code\.getxtra\.in>/', $msg));
 
 $utf = $mime->build('x@y.z', 'ऑर्डर की पुष्टि', '<p>hi</p>');
 $check('non-ASCII subject is RFC 2047 encoded', str_contains($utf, 'Subject: =?UTF-8?B?'));
@@ -79,19 +79,19 @@ $check('non-ASCII subject is RFC 2047 encoded', str_contains($utf, 'Subject: =?U
 // ── Full dialog: STARTTLS + AUTH LOGIN ─────────────────────────────
 echo "\n-- SMTP dialog (TLS + auth) --\n";
 $conn = new FakeSmtpConnection([220, 250, 220, 250, 334, 334, 235, 250, 250, 354, 250]);
-$mailer = new SmtpMailer($conn, $mime, 'no-reply@sell.getxtra.in', 'tls', 'smtp-user', 's3cr3t');
+$mailer = new SmtpMailer($conn, $mime, 'no-reply@code.getxtra.in', 'tls', 'smtp-user', 's3cr3t');
 $mailer->send('buyer@example.com', 'Hello', '<p>Body</p>');
 
 $check('connection opened + closed', $conn->opened && $conn->closed);
 $check('TLS negotiated', $conn->tls);
 $expected = [
-    'EHLO sell.getxtra.in',
+    'EHLO code.getxtra.in',
     'STARTTLS',
-    'EHLO sell.getxtra.in',
+    'EHLO code.getxtra.in',
     'AUTH LOGIN',
     base64_encode('smtp-user'),
     base64_encode('s3cr3t'),
-    'MAIL FROM:<no-reply@sell.getxtra.in>',
+    'MAIL FROM:<no-reply@code.getxtra.in>',
     'RCPT TO:<buyer@example.com>',
     'DATA',
     'QUIT',
@@ -103,16 +103,16 @@ $check('DATA payload has the message + terminator', str_contains($conn->written,
 // ── Plain dialog: no TLS, no auth ──────────────────────────────────
 echo "\n-- SMTP dialog (plain) --\n";
 $conn2 = new FakeSmtpConnection([220, 250, 250, 250, 354, 250]);
-$mailer2 = new SmtpMailer($conn2, $mime, 'no-reply@sell.getxtra.in', 'none');
+$mailer2 = new SmtpMailer($conn2, $mime, 'no-reply@code.getxtra.in', 'none');
 $mailer2->send('a@b.co', 'Hi', '<p>x</p>');
 $check('no STARTTLS/AUTH when not configured',
-    $conn2->commands === ['EHLO sell.getxtra.in', 'MAIL FROM:<no-reply@sell.getxtra.in>', 'RCPT TO:<a@b.co>', 'DATA', 'QUIT']);
+    $conn2->commands === ['EHLO code.getxtra.in', 'MAIL FROM:<no-reply@code.getxtra.in>', 'RCPT TO:<a@b.co>', 'DATA', 'QUIT']);
 $check('plain send did not negotiate TLS', $conn2->tls === false);
 
 // ── Error handling ─────────────────────────────────────────────────
 echo "\n-- Error handling --\n";
 $conn3 = new FakeSmtpConnection([220, 250, 250, 550]); // RCPT rejected
-$mailer3 = new SmtpMailer($conn3, $mime, 'no-reply@sell.getxtra.in', 'none');
+$mailer3 = new SmtpMailer($conn3, $mime, 'no-reply@code.getxtra.in', 'none');
 $threw = false;
 try {
     $mailer3->send('blocked@example.com', 'Hi', '<p>x</p>');
