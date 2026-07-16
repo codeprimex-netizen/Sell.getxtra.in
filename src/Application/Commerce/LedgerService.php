@@ -43,6 +43,35 @@ final class LedgerService
     }
 
     /**
+     * Move a paid order's seller earnings from pending to cleared once the
+     * refund window has elapsed (Req 11.4). Idempotent: a "clearing" entry is
+     * written per order, so re-runs are no-ops.
+     *
+     * @param array<int, array<string,mixed>> $items order_items rows
+     * @return bool true if cleared now, false if already cleared
+     */
+    public function clearEarning(int $orderId, array $items, string $currency): bool
+    {
+        if ($this->ledger->entriesForRef('clearing', $orderId) !== []) {
+            return false;
+        }
+
+        $memo = 'Clearing order #' . $orderId;
+        foreach ($items as $item) {
+            $earning = Money::fromDecimal((float) $item['seller_earning'], $currency);
+            if (!$earning->isPositive()) {
+                continue;
+            }
+            $seller = $this->ledger->account('seller', (int) $item['seller_id'], $currency);
+            // pending -> cleared for the seller's earning.
+            $this->ledger->post($seller, 'debit', 'pending', $earning, 'clearing', $orderId, $memo);
+            $this->ledger->post($seller, 'credit', 'cleared', $earning, 'clearing', $orderId, $memo);
+        }
+
+        return true;
+    }
+
+    /**
      * Reverse a fraction (0..1) of an order's ledger entries on refund.
      *
      * @param array<int, array<string,mixed>> $items

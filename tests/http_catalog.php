@@ -74,6 +74,14 @@ $check('GET /admin/disputes requires auth', $redirectsToLogin($make('GET', '/adm
 $check('GET /admin/settings requires auth', $redirectsToLogin($make('GET', '/admin/settings')));
 $check('POST /admin/users/1/suspend blocked without CSRF (419)', $kernel->handle($make('POST', '/admin/users/1/suspend'))->status() === 419);
 
+// Phase 7: seller console + finance require auth (auth runs before can/mfa).
+$check('GET /seller/dashboard requires auth', $redirectsToLogin($make('GET', '/seller/dashboard')));
+$check('GET /seller/payouts requires auth', $redirectsToLogin($make('GET', '/seller/payouts')));
+$check('GET /seller/onboard requires auth', $redirectsToLogin($make('GET', '/seller/onboard')));
+$check('GET /finance/payouts requires auth', $redirectsToLogin($make('GET', '/finance/payouts')));
+$check('GET /finance/kyc requires auth', $redirectsToLogin($make('GET', '/finance/kyc')));
+$check('POST /seller/payouts blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/payouts'))->status() === 419);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

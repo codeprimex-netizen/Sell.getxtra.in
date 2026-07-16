@@ -31,4 +31,12 @@ interface OrderRepositoryInterface
 
     /** @return array<int, array<string,mixed>> orders for a buyer (newest first) */
     public function forBuyer(int $buyerId, int $limit = 50, int $offset = 0): array;
+
+    /**
+     * Fully-paid orders placed before a cutoff whose earnings are ready to
+     * clear from pending to cleared (Req 11.4). Excludes refunded orders.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function paidOrdersBefore(string $cutoff, int $limit = 100): array;
 }

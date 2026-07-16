@@ -223,6 +223,15 @@ final class InMemoryOrderRepository implements OrderRepositoryInterface
     {
         return array_values(array_filter($this->orders, static fn ($o) => (int) $o['buyer_id'] === $buyerId));
     }
+
+    public function paidOrdersBefore(string $cutoff, int $limit = 100): array
+    {
+        $ts = strtotime($cutoff);
+        return array_values(array_filter($this->orders, static function ($o) use ($ts) {
+            return ($o['status'] ?? '') === 'paid'
+                && strtotime((string) ($o['created_at'] ?? 'now')) < $ts;
+        }));
+    }
 }
 
 final class InMemoryPaymentRepository implements PaymentRepositoryInterface

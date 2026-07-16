@@ -112,6 +112,7 @@ final class App
         $this->registerCatalogServices();
         $this->registerCommerceServices();
         $this->registerAdminServices();
+        $this->registerSellerServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -289,6 +290,23 @@ final class App
             static fn (Container $c) => new \App\Infrastructure\Persistence\PdoReportRepository($conn($c)));
     }
 
+    /**
+     * Bind seller/payout repositories (Phase 7). Seller application services
+     * autowire from these plus the commerce/ledger bindings above.
+     */
+    private function registerSellerServices(): void
+    {
+        $c = $this->container;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(\App\Domain\Seller\SellerProfileRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoSellerProfileRepository($conn($c)));
+        $c->singleton(\App\Domain\Seller\PayoutRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoPayoutRepository($conn($c)));
+        $c->singleton(\App\Domain\Seller\SellerStatsRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoSellerStatsRepository($conn($c)));
+    }
+
     private function registerHttp(): void
     {
         $c = $this->container;
@@ -307,11 +325,12 @@ final class App
                     VerifyCsrf::class,
                 ],
                 aliases: [
-                    'auth'     => Authenticate::class,
-                    'guest'    => RedirectIfAuthenticated::class,
-                    'can'      => Authorize::class,
-                    'mfa'      => EnsureTwoFactor::class,
-                    'throttle' => RateLimit::class,
+                    'auth'            => Authenticate::class,
+                    'guest'           => RedirectIfAuthenticated::class,
+                    'can'             => Authorize::class,
+                    'mfa'             => EnsureTwoFactor::class,
+                    'throttle'        => RateLimit::class,
+                    'seller.verified' => \App\Http\Middleware\SellerVerified::class,
                 ],
             );
         });

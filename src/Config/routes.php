@@ -28,8 +28,13 @@ use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\PaymentWebhookController;
 use App\Http\Controllers\Web\ReviewController;
 use App\Http\Controllers\Web\SearchController;
+use App\Http\Controllers\Web\Finance\KycController as FinanceKycController;
+use App\Http\Controllers\Web\Finance\PayoutController as FinancePayoutController;
+use App\Http\Controllers\Web\Seller\DashboardController as SellerDashboardController;
+use App\Http\Controllers\Web\Seller\PayoutController as SellerPayoutController;
 use App\Http\Controllers\Web\Seller\ProductController;
 use App\Http\Controllers\Web\Seller\ProductVersionController;
+use App\Http\Controllers\Web\Seller\ProfileController as SellerProfileController;
 use App\Http\Controllers\Web\WishlistController;
 use App\Http\Request;
 use App\Http\Response;
@@ -116,15 +121,33 @@ return static function (Router $router): void {
     // Public license verification API (Req 10.3).
     $router->get('/api/v1/licenses/verify', [LicenseController::class, 'verify'], ['throttle:60,1']);
 
-    // ── Seller product management (Req 4 / 5) ─────────────────────
+    // ── Seller onboarding + console (Req 11) ──────────────────────
+    $router->get('/seller/onboard', [SellerProfileController::class, 'onboardForm'], ['auth']);
+    $router->post('/seller/onboard', [SellerProfileController::class, 'onboard'], ['auth']);
+    $router->get('/seller/dashboard', [SellerDashboardController::class, 'index'], ['auth', 'can:product.create']);
+    $router->get('/seller/profile', [SellerProfileController::class, 'show'], ['auth', 'can:product.create']);
+    $router->post('/seller/kyc', [SellerProfileController::class, 'submitKyc'], ['auth', 'can:product.create']);
+    $router->post('/seller/payout-method', [SellerProfileController::class, 'setPayoutMethod'], ['auth', 'can:product.create']);
+    $router->get('/seller/payouts', [SellerPayoutController::class, 'index'], ['auth', 'can:payout.request']);
+    $router->post('/seller/payouts', [SellerPayoutController::class, 'request'], ['auth', 'can:payout.request', 'seller.verified', 'throttle:20,1']);
+
+    // ── Seller product management (Req 4 / 5) — selling requires KYC ─
     $router->get('/seller/products', [ProductController::class, 'index'], ['auth', 'can:product.create']);
-    $router->get('/seller/products/create', [ProductController::class, 'create'], ['auth', 'can:product.create']);
-    $router->post('/seller/products', [ProductController::class, 'store'], ['auth', 'can:product.create']);
+    $router->get('/seller/products/create', [ProductController::class, 'create'], ['auth', 'can:product.create', 'seller.verified']);
+    $router->post('/seller/products', [ProductController::class, 'store'], ['auth', 'can:product.create', 'seller.verified']);
     $router->get('/seller/products/{id}/edit', [ProductController::class, 'edit'], ['auth', 'can:product.update']);
-    $router->put('/seller/products/{id}', [ProductController::class, 'update'], ['auth', 'can:product.update']);
-    $router->post('/seller/products/{id}/versions', [ProductVersionController::class, 'store'], ['auth', 'can:product.update']);
-    $router->post('/seller/products/{id}/submit', [ProductController::class, 'submit'], ['auth', 'can:product.update']);
+    $router->put('/seller/products/{id}', [ProductController::class, 'update'], ['auth', 'can:product.update', 'seller.verified']);
+    $router->post('/seller/products/{id}/versions', [ProductVersionController::class, 'store'], ['auth', 'can:product.update', 'seller.verified']);
+    $router->post('/seller/products/{id}/submit', [ProductController::class, 'submit'], ['auth', 'can:product.update', 'seller.verified']);
     $router->post('/seller/products/{id}/archive', [ProductController::class, 'archive'], ['auth', 'can:product.update']);
+
+    // ── Finance: payouts + KYC review (Req 11) — requires MFA ─────
+    $router->get('/finance/payouts', [FinancePayoutController::class, 'queue'], ['auth', 'mfa', 'can:payout.process']);
+    $router->post('/finance/payouts/{id}/pay', [FinancePayoutController::class, 'pay'], ['auth', 'mfa', 'can:payout.process']);
+    $router->post('/finance/payouts/{id}/reject', [FinancePayoutController::class, 'reject'], ['auth', 'mfa', 'can:payout.process']);
+    $router->get('/finance/kyc', [FinanceKycController::class, 'queue'], ['auth', 'mfa', 'can:kyc.review']);
+    $router->post('/finance/kyc/{id}/verify', [FinanceKycController::class, 'verify'], ['auth', 'mfa', 'can:kyc.review']);
+    $router->post('/finance/kyc/{id}/reject', [FinanceKycController::class, 'reject'], ['auth', 'mfa', 'can:kyc.review']);
 
     // ── Admin moderation (Req 12.1) ───────────────────────────────
     $router->get('/admin/moderation', [ModerationController::class, 'queue'], ['auth', 'can:product.approve']);

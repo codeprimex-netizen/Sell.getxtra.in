@@ -33,7 +33,7 @@ final class Seeder
         'user.view', 'user.suspend', 'user.assign_role',
         'category.manage', 'coupon.manage', 'product.feature',
         'settings.manage', 'feature_flag.manage', 'report.view',
-        'dispute.handle', 'ticket.handle',
+        'dispute.handle', 'ticket.handle', 'kyc.review',
     ];
 
     /** @var array<string, array<int, string>> role => permissions ('*' = all) */
@@ -42,12 +42,12 @@ final class Seeder
         'seller'    => ['product.create', 'product.update', 'order.view', 'payout.request'],
         'support'   => ['order.view', 'ticket.handle', 'dispute.handle'],
         'moderator' => ['product.approve', 'product.suspend', 'review.moderate'],
-        'finance'   => ['order.view', 'order.refund', 'payout.process'],
+        'finance'   => ['order.view', 'order.refund', 'payout.process', 'kyc.review'],
         'admin'     => [
             'product.approve', 'product.suspend', 'product.feature', 'order.view', 'order.refund',
             'review.moderate', 'user.view', 'user.suspend', 'user.assign_role', 'category.manage',
             'coupon.manage', 'settings.manage', 'feature_flag.manage', 'report.view',
-            'dispute.handle', 'ticket.handle',
+            'dispute.handle', 'ticket.handle', 'kyc.review', 'payout.process',
         ],
         'super_admin' => ['*'],
     ];

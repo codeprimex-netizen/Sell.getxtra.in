@@ -93,4 +93,17 @@ final class PdoOrderRepository extends Repository implements OrderRepositoryInte
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function paidOrdersBefore(string $cutoff, int $limit = 100): array
+    {
+        $stmt = $this->connection->read()->prepare(
+            "SELECT * FROM {$this->table}
+             WHERE status = 'paid' AND created_at < :cutoff
+             ORDER BY created_at ASC LIMIT :lim"
+        );
+        $stmt->bindValue('cutoff', $cutoff);
+        $stmt->bindValue('lim', max(1, min($limit, 500)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
 }
