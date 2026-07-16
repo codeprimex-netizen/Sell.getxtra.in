@@ -140,4 +140,13 @@ final class InMemoryReferralRepository implements ReferralRepositoryInterface
         usort($rows, static fn ($a, $b) => (int) $b['id'] <=> (int) $a['id']);
         return array_slice($rows, 0, $limit);
     }
+
+    public function convertedBefore(string $before, int $limit = 500): array
+    {
+        $rows = array_values(array_filter($this->rows, static fn ($r) =>
+            ($r['status'] ?? '') === 'converted'
+            && !empty($r['converted_at'])
+            && (string) $r['converted_at'] < $before));
+        return array_slice($rows, 0, $limit);
+    }
 }

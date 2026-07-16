@@ -49,6 +49,7 @@ final class PayoutService
 
         $id = $this->payouts->create([
             'seller_id' => $sellerId,
+            'source'    => 'seller',
             'amount'    => round($amount, 2),
             'currency'  => $currency,
             'method'    => $method,
@@ -74,7 +75,10 @@ final class PayoutService
         }
 
         $currency = (string) $payout['currency'];
-        $account = $this->ledger->account('seller', (int) $payout['seller_id'], $currency);
+        // Debit the correct ledger account for the payout's source so seller
+        // earnings and affiliate commission draw down independently (Req 20.2).
+        $accountType = ((string) ($payout['source'] ?? 'seller')) === 'affiliate' ? 'affiliate' : 'seller';
+        $account = $this->ledger->account($accountType, (int) $payout['seller_id'], $currency);
         $this->ledger->post(
             $account,
             'debit',
@@ -82,7 +86,7 @@ final class PayoutService
             Money::fromDecimal((float) $payout['amount'], $currency),
             'payout',
             $payoutId,
-            'Payout #' . $payoutId,
+            ucfirst($accountType) . ' payout #' . $payoutId,
         );
 
         $this->payouts->updateStatus($payoutId, PayoutStatus::Paid->value, $gatewayRef);
@@ -115,7 +119,7 @@ final class PayoutService
     /** @return array<int, array<string,mixed>> */
     public function forSeller(int $sellerId): array
     {
-        return $this->payouts->forSeller($sellerId);
+        return $this->payouts->forSeller($sellerId, 50, 0, 'seller');
     }
 
     /** @return array<int, array<string,mixed>> */

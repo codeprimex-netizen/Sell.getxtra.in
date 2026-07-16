@@ -89,4 +89,17 @@ final class PdoReferralRepository extends Repository implements ReferralReposito
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    public function convertedBefore(string $before, int $limit = 500): array
+    {
+        $stmt = $this->connection->read()->prepare(
+            "SELECT * FROM {$this->table}
+             WHERE status = 'converted' AND converted_at IS NOT NULL AND converted_at < :before
+             ORDER BY id ASC LIMIT :lim"
+        );
+        $stmt->bindValue('before', $before);
+        $stmt->bindValue('lim', max(1, min($limit, 1000)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
 }

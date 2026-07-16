@@ -100,6 +100,39 @@ final class LedgerService
     }
 
     /**
+     * Clear an affiliate commission from pending to cleared once the order's
+     * refund window has elapsed (Req 20.2), mirroring seller clearing.
+     * Idempotent per order via the "affiliate_clearing" ref.
+     *
+     * @return bool true if cleared now, false if already cleared / nothing to do
+     */
+    public function clearAffiliateCommission(int $orderId, int $affiliateUserId, Money $commission, string $currency): bool
+    {
+        if (!$commission->isPositive()) {
+            return false;
+        }
+        if ($this->ledger->entriesForRef('affiliate_clearing', $orderId) !== []) {
+            return false;
+        }
+
+        $memo = 'Affiliate clearing (order #' . $orderId . ')';
+        $affiliate = $this->ledger->account('affiliate', $affiliateUserId, $currency);
+        $this->ledger->post($affiliate, 'debit', 'pending', $commission, 'affiliate_clearing', $orderId, $memo);
+        $this->ledger->post($affiliate, 'credit', 'cleared', $commission, 'affiliate_clearing', $orderId, $memo);
+
+        return true;
+    }
+
+    /**
+     * Debit an affiliate's cleared balance when a payout is disbursed (Req 20.2).
+     */
+    public function debitAffiliatePayout(int $affiliateUserId, Money $amount, string $currency, int $payoutId): void
+    {
+        $affiliate = $this->ledger->account('affiliate', $affiliateUserId, $currency);
+        $this->ledger->post($affiliate, 'debit', 'cleared', $amount, 'payout', $payoutId, 'Affiliate payout #' . $payoutId);
+    }
+
+    /**
      * Reverse a fraction (0..1) of an order's ledger entries on refund.
      *
      * @param array<int, array<string,mixed>> $items

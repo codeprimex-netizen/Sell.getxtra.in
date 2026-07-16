@@ -79,14 +79,16 @@ final class InMemoryPayoutRepository implements PayoutRepositoryInterface
         return $this->rows[$id] ?? null;
     }
 
-    public function forSeller(int $sellerId, int $limit = 50, int $offset = 0): array
+    public function forSeller(int $sellerId, int $limit = 50, int $offset = 0, ?string $source = null): array
     {
-        return array_values(array_filter($this->rows, static fn ($p) => (int) $p['seller_id'] === $sellerId));
+        return array_values(array_filter($this->rows, static fn ($p) =>
+            (int) $p['seller_id'] === $sellerId && ($source === null || ($p['source'] ?? 'seller') === $source)));
     }
 
-    public function byStatus(string $status, int $limit = 50, int $offset = 0): array
+    public function byStatus(string $status, int $limit = 50, int $offset = 0, ?string $source = null): array
     {
-        return array_values(array_filter($this->rows, static fn ($p) => $p['status'] === $status));
+        return array_values(array_filter($this->rows, static fn ($p) =>
+            $p['status'] === $status && ($source === null || ($p['source'] ?? 'seller') === $source)));
     }
 
     public function updateStatus(int $id, string $status, ?string $gatewayRef = null, ?string $note = null): bool
@@ -104,11 +106,13 @@ final class InMemoryPayoutRepository implements PayoutRepositoryInterface
         return true;
     }
 
-    public function reservedAmount(int $sellerId): float
+    public function reservedAmount(int $sellerId, ?string $source = null): float
     {
         $sum = 0.0;
         foreach ($this->rows as $p) {
-            if ((int) $p['seller_id'] === $sellerId && in_array($p['status'], ['requested', 'processing'], true)) {
+            if ((int) $p['seller_id'] === $sellerId
+                && in_array($p['status'], ['requested', 'processing'], true)
+                && ($source === null || ($p['source'] ?? 'seller') === $source)) {
                 $sum += (float) $p['amount'];
             }
         }

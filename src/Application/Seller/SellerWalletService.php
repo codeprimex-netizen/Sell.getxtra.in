@@ -27,7 +27,7 @@ final class SellerWalletService
     {
         $accountId = $this->ledger->account('seller', $sellerId, $currency);
         $balances = $this->ledger->balances($accountId);
-        $reserved = $this->payouts->reservedAmount($sellerId);
+        $reserved = $this->payouts->reservedAmount($sellerId, 'seller');
         $available = round(max(0.0, $balances['balance'] - $reserved), 2);
 
         return [

@@ -29,4 +29,12 @@ interface ReferralRepositoryInterface
 
     /** @return array<int, array<string,mixed>> a user's affiliate referrals (as the affiliate) */
     public function forAffiliate(int $affiliateId, int $limit = 100): array;
+
+    /**
+     * Converted referrals whose commission was earned before the cutoff, for
+     * the clearing job to move affiliate commission pending → cleared.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function convertedBefore(string $before, int $limit = 500): array;
 }

@@ -603,6 +603,9 @@ final class App
                     $items = $orders->items((int) $order['id']);
                     $ledger->clearEarning((int) $order['id'], $items, (string) $order['currency']);
                 }
+
+                // Clear affiliate commissions past the same refund window (Req 20.2).
+                $c->get(\App\Application\Affiliate\AffiliatePayoutService::class)->clearDueCommissions($cutoff);
             });
 
             // Purge expired data-export artifacts (Req 14.8 retention).

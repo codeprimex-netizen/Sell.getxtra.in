@@ -119,6 +119,7 @@ return static function (Router $router): void {
     $router->get('/r/{code}', [ReferralController::class, 'land'], ['throttle:60,1']);
     $router->get('/account/affiliate', [AffiliateController::class, 'index'], ['auth']);
     $router->post('/account/affiliate/enroll', [AffiliateController::class, 'enroll'], ['auth', 'throttle:10,1']);
+    $router->post('/account/affiliate/payout', [AffiliateController::class, 'requestPayout'], ['auth', 'throttle:10,1']);
 
     // ── Privacy centre: consent, export, erasure (Req 14.8) ───────
     $router->get('/account/privacy', [PrivacyController::class, 'index'], ['auth']);

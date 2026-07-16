@@ -12,14 +12,27 @@ interface PayoutRepositoryInterface
     /** @return array<string,mixed>|null */
     public function findById(int $id): ?array;
 
-    /** @return array<int, array<string,mixed>> a seller's payouts (newest first) */
-    public function forSeller(int $sellerId, int $limit = 50, int $offset = 0): array;
+    /**
+     * A user's payouts (newest first). Filter by source ('seller'|'affiliate')
+     * or null for all.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function forSeller(int $sellerId, int $limit = 50, int $offset = 0, ?string $source = null): array;
 
-    /** @return array<int, array<string,mixed>> payouts in a status (finance queue) */
-    public function byStatus(string $status, int $limit = 50, int $offset = 0): array;
+    /**
+     * Payouts in a status (finance queue), optionally filtered by source.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function byStatus(string $status, int $limit = 50, int $offset = 0, ?string $source = null): array;
 
     public function updateStatus(int $id, string $status, ?string $gatewayRef = null, ?string $note = null): bool;
 
-    /** Sum of amounts still reserved (requested + processing) for a seller. */
-    public function reservedAmount(int $sellerId): float;
+    /**
+     * Sum of amounts still reserved (requested + processing) for a user,
+     * optionally scoped to a payout source so seller and affiliate balances
+     * reserve independently.
+     */
+    public function reservedAmount(int $sellerId, ?string $source = null): float;
 }

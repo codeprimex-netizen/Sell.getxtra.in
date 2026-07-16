@@ -44,6 +44,7 @@ final class Config
             'affiliate' => [
                 'enabled'      => (bool) Env::get('AFFILIATE_ENABLED', true),
                 'default_rate' => (float) Env::get('AFFILIATE_DEFAULT_RATE', 10),  // % of subtotal
+                'min_payout'   => (float) Env::get('AFFILIATE_MIN_PAYOUT', 100),   // withdrawal threshold
             ],
             'db' => [
                 'host'      => Env::get('DB_HOST', '127.0.0.1'),
