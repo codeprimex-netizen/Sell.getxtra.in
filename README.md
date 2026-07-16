@@ -7,7 +7,7 @@ Built in **custom Core PHP 8.x (no framework)** on **MySQL/PDO**, with a layered
 dependency-injected, PSR-4 architecture. Security, DI, routing, and reliability are
 engineered in-house and covered by automated tests.
 
-> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://www.sell.getxtra.in
+> **Developer:** ANSHU E-MITRA AND CSC CENTER · **URL:** https://sell.getxtra.in
 
 ---
 
@@ -52,7 +52,31 @@ engineered in-house and covered by automated tests.
 - PHP ≥ 8.2 with `pdo_mysql`, `mbstring`, `intl` (and `redis` in production)
 - Composer 2, MySQL 8, Redis (production)
 
-## Quick start
+## Installation
+
+The fastest way to provision a fresh deployment is the built-in **installer**,
+which checks requirements, creates the database, generates `APP_KEY`, writes
+`.env`, runs migrations + seeders, and creates your first admin account.
+
+**Option A — Web wizard.** After `composer install`, browse to
+`https://sell.getxtra.in/install.php` and follow the steps
+(welcome → requirements → database → configuration → finish). When it
+completes, **delete `public/install.php`** for security (a
+`storage/installed.lock` file also prevents re-runs).
+
+**Option B — Headless CLI.**
+
+```bash
+composer install
+php bin/console install \
+  --db-host=127.0.0.1 --db-port=3306 --db-name=sell_getxtra \
+  --db-user=root --db-pass=secret \
+  --url=https://sell.getxtra.in --name="Sell.getxtra.in" \
+  --admin-name="Admin" --admin-email=admin@sell.getxtra.in \
+  --admin-password=change-me-please
+```
+
+## Quick start (manual)
 
 ```bash
 cp .env.example .env
@@ -93,6 +117,7 @@ composer syntax      # php -l across the tree
 ## Console
 
 ```
+php bin/console install [--db-host= --db-name= --db-user= --db-pass= --url= --admin-email= --admin-password= --force]
 php bin/console migrate | rollback | seed
 php bin/console queue:work [queue]
 php bin/console schedule:run [--force]

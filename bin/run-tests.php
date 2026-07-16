@@ -24,6 +24,7 @@ $suites = [
     'phase4', 'phase5', 'phase6', 'phase7', 'phase8',
     'phase9', 'phase10', 'phase11', 'phase12', 'phase13', 'phase16',
     'affiliate', 'affiliate_payout', 'gallery', 'dashboard', 'invoice', 'mail', 'e2e', 'env', 'security', 'security_authz',
+    'installer',
 ];
 
 if ($only !== null) {

@@ -1,7 +1,7 @@
 # Implementation Tasks — Sell.getxtra.in (Enterprise Edition)
 
 **Project:** Sell.getxtra.in — Enterprise Digital Products Marketplace
-**Base URL:** https://www.sell.getxtra.in
+**Base URL:** https://sell.getxtra.in
 **Developer:** ANSHU E-MITRA AND CSC CENTER
 **Stack:** Core PHP 8.3+ (custom modular, PSR-4/PSR-12), MySQL 8 (+replicas), Redis, OpenSearch/Meilisearch, S3+CDN, Nginx+PHP-FPM, Docker, CI/CD
 **Document Status:** Baseline v2.0 (Enterprise) — implements REQUIREMENTS.md, follows DESIGN.md

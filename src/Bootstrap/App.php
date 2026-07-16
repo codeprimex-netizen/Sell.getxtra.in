@@ -241,7 +241,7 @@ final class App
 
         // SEO sitemap generator (Req 20.3).
         $c->singleton(\App\Application\Seo\SitemapGenerator::class, static fn (): \App\Application\Seo\SitemapGenerator =>
-            new \App\Application\Seo\SitemapGenerator((string) Config::get('app.url', 'https://www.sell.getxtra.in')));
+            new \App\Application\Seo\SitemapGenerator((string) Config::get('app.url', 'https://sell.getxtra.in')));
 
         // Session store: cache-backed (stateless tier) when configured, else native.
         $c->singleton(SessionStore::class, static function (Container $c): SessionStore {

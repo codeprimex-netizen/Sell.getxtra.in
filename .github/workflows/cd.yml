@@ -84,7 +84,7 @@ jobs:
     # (configured in repo settings) before this job runs.
     environment:
       name: production
-      url: https://www.sell.getxtra.in
+      url: https://sell.getxtra.in
     env:
       TAG: ${{ github.event.inputs.image_tag || needs.build-push.outputs.tag }}
     steps:
@@ -111,4 +111,4 @@ jobs:
           fi
           kubectl rollout status deployment/sell-worker --timeout=300s || kubectl rollout undo deployment/sell-worker
       - name: Post-deploy smoke test
-        run: curl -fsS https://www.sell.getxtra.in/readyz
+        run: curl -fsS https://sell.getxtra.in/readyz

@@ -1,7 +1,7 @@
 # Requirements — Sell.getxtra.in (Enterprise Edition)
 
 **Project:** Sell.getxtra.in — Enterprise Digital Products Marketplace
-**Base URL:** https://www.sell.getxtra.in
+**Base URL:** https://sell.getxtra.in
 **Developer:** ANSHU E-MITRA AND CSC CENTER
 **Tech Stack:** Core PHP 8.3+ (custom modular framework, PSR-4/PSR-12, no full framework), MySQL 8 (PDO, primary + read replicas), Redis (cache/session/queue), OpenSearch/Meilisearch (search), S3-compatible object storage + CDN, Nginx + PHP-FPM, Docker, CI/CD
 **Document Status:** Baseline v2.0 (Enterprise)

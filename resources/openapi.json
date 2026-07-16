@@ -7,7 +7,7 @@
     "contact": { "name": "ANSHU E-MITRA AND CSC CENTER" }
   },
   "servers": [
-    { "url": "https://www.sell.getxtra.in", "description": "Production" }
+    { "url": "https://sell.getxtra.in", "description": "Production" }
   ],
   "components": {
     "securitySchemes": {

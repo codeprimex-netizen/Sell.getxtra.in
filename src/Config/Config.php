@@ -28,7 +28,7 @@ final class Config
                 'name'     => Env::get('APP_NAME', 'Sell.getxtra.in'),
                 'env'      => Env::get('APP_ENV', 'production'),
                 'debug'    => (bool) Env::get('APP_DEBUG', false),
-                'url'      => Env::get('APP_URL', 'https://www.sell.getxtra.in'),
+                'url'      => Env::get('APP_URL', 'https://sell.getxtra.in'),
                 'key'      => Env::get('APP_KEY', ''),
                 'timezone' => Env::get('APP_TIMEZONE', 'UTC'),
                 'locale'           => Env::get('APP_LOCALE', 'en'),

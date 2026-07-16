@@ -52,7 +52,7 @@ final class SeoController
 
     public function robots(Request $request): Response
     {
-        $base = rtrim((string) Config::get('app.url', 'https://www.sell.getxtra.in'), '/');
+        $base = rtrim((string) Config::get('app.url', 'https://sell.getxtra.in'), '/');
         $body = implode("\n", [
             'User-agent: *',
             'Allow: /',
