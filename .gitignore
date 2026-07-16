@@ -1,0 +1,30 @@
+# Dependencies
+/vendor/
+node_modules/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Runtime / storage
+/storage/logs/*.log
+/storage/cache/*
+/storage/tmp/*
+!/storage/**/.gitkeep
+
+# Build artifacts
+/public/assets/build/
+*.cache
+
+# PHP tooling
+.phpunit.result.cache
+/.phpstan/
+coverage/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

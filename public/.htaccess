@@ -1,0 +1,16 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Serve existing files/directories directly.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Route everything else through the front controller.
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# Do not expose dotfiles.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>

@@ -1,0 +1,62 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * CLI entry point for maintenance commands.
+ *
+ * Usage:
+ *   php bin/console migrate      Apply pending migrations
+ *   php bin/console rollback     Roll back the last migration batch
+ *   php bin/console seed         Seed baseline data (roles/permissions/categories)
+ */
+
+use App\Bootstrap\App;
+use App\Console\MigrationRunner;
+use App\Console\Seeder;
+use App\Infrastructure\Persistence\ConnectionManager;
+
+$basePath = dirname(__DIR__);
+
+require $basePath . '/vendor/autoload.php';
+
+$app = (new App($basePath))->boot();
+$container = $app->container();
+
+$command = $argv[1] ?? 'help';
+
+/** @var ConnectionManager $connection */
+$connection = $container->get(ConnectionManager::class);
+
+try {
+    switch ($command) {
+        case 'migrate':
+            (new MigrationRunner($connection, $basePath . '/database/migrations'))->migrate();
+            break;
+
+        case 'rollback':
+            (new MigrationRunner($connection, $basePath . '/database/migrations'))->rollback();
+            break;
+
+        case 'seed':
+            (new Seeder($connection))->run();
+            break;
+
+        default:
+            fwrite(STDOUT, <<<TXT
+            Sell.getxtra.in console
+
+            Commands:
+              migrate     Apply pending database migrations
+              rollback    Roll back the last migration batch
+              seed        Seed baseline data
+
+            TXT);
+            break;
+    }
+    exit(0);
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Error: ' . $e->getMessage() . PHP_EOL);
+    exit(1);
+}
