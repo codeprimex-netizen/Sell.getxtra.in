@@ -14,6 +14,7 @@ $categories = $categories ?? [];
 $difficulties = $difficulties ?? [];
 $tiers = $tiers ?? [];
 $versions = $versions ?? [];
+$screenshots = $screenshots ?? [];
 $tagsValue = $tags_value ?? '';
 $isEdit = $mode === 'edit' && !empty($product);
 $action = $isEdit ? '/seller/products/' . (int) $product['id'] : '/seller/products';
@@ -80,6 +81,27 @@ $status = (string) ($product['status'] ?? 'draft');
   </form>
 
   <?php if ($isEdit): ?>
+    <hr style="border-color:#1e293b;margin:1.75rem 0">
+    <h1 style="font-size:1.15rem">Screenshots &amp; gallery</h1>
+    <p class="sub">Add preview images buyers see on the product page (jpg/png/webp, max 5MB each).</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin:.5rem 0 1rem">
+      <?php foreach ($screenshots as $s): ?>
+        <div style="background:#0b1220;border:1px solid #1e293b;border-radius:9px;overflow:hidden">
+          <img src="<?= e((string) $s['url']) ?>" alt="Screenshot" style="width:100%;height:100px;object-fit:cover;display:block">
+          <form action="/seller/products/<?= (int) $product['id'] ?>/screenshots/<?= (int) $s['id'] ?>/delete" method="post" style="margin:0">
+            <input type="hidden" name="_token" value="<?= e($csrf_token) ?>">
+            <button type="submit" style="width:100%;margin:0;border-radius:0;background:#7f1d1d;padding:.3rem;font-size:.8rem">Remove</button>
+          </form>
+        </div>
+      <?php endforeach; ?>
+      <?php if ($screenshots === []): ?><p style="color:#94a3b8;grid-column:1/-1">No screenshots yet.</p><?php endif; ?>
+    </div>
+    <form action="/seller/products/<?= (int) $product['id'] ?>/screenshots" method="post" enctype="multipart/form-data">
+      <input type="hidden" name="_token" value="<?= e($csrf_token) ?>">
+      <input type="file" name="screenshot" accept="image/*">
+      <button class="ghost" type="submit">Add screenshot</button>
+    </form>
+
     <hr style="border-color:#1e293b;margin:1.75rem 0">
     <h1 style="font-size:1.15rem">Versions</h1>
     <table>

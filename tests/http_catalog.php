@@ -41,6 +41,8 @@ $check('GET /seller/products/create requires auth', $redirectsToLogin($make('GET
 $check('GET /admin/moderation requires auth', $redirectsToLogin($make('GET', '/admin/moderation')));
 // POST hits global CSRF middleware (419) before the auth guard — still blocked.
 $check('POST /seller/products blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/products'))->status() === 419);
+$check('POST /seller/products/1/screenshots blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/products/1/screenshots'))->status() === 419);
+$check('POST /seller/products/1/screenshots/2/delete blocked without CSRF (419)', $kernel->handle($make('POST', '/seller/products/1/screenshots/2/delete'))->status() === 419);
 
 // Storefront home renders through the layout and degrades gracefully w/o a DB.
 $homeRes = $kernel->handle($make('GET', '/'));

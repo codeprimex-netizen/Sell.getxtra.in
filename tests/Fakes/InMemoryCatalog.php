@@ -363,14 +363,21 @@ final class InMemoryProductFileRepository implements ProductFileRepositoryInterf
     public function add(int $productId, string $type, string $storageKey, int $sortOrder = 0): int
     {
         $id = ++$this->seq;
-        $this->rows[$id] = compact('id', 'productId', 'type', 'storageKey', 'sortOrder');
+        // Mirror the DB column names returned by the PDO repository.
+        $this->rows[$id] = [
+            'id'          => $id,
+            'product_id'  => $productId,
+            'type'        => $type,
+            'storage_key' => $storageKey,
+            'sort_order'  => $sortOrder,
+        ];
         return $id;
     }
 
     public function forProduct(int $productId, ?string $type = null): array
     {
         return array_values(array_filter($this->rows, static function ($r) use ($productId, $type) {
-            return (int) $r['productId'] === $productId && ($type === null || $r['type'] === $type);
+            return (int) $r['product_id'] === $productId && ($type === null || $r['type'] === $type);
         }));
     }
 

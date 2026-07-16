@@ -47,6 +47,48 @@ final class ProductMediaService
         return $this->files->add($productId, 'screenshot', $key, $sortOrder);
     }
 
+    /**
+     * Gallery screenshots for a product with their public (CDN) URLs.
+     *
+     * @return array<int, array{id:int, url:string, sort_order:int}>
+     */
+    public function screenshots(int $productId): array
+    {
+        return array_map(
+            fn (array $f): array => [
+                'id'         => (int) $f['id'],
+                'url'        => $this->storage->public()->url((string) $f['storage_key']),
+                'sort_order' => (int) ($f['sort_order'] ?? 0),
+            ],
+            $this->files->forProduct($productId, 'screenshot'),
+        );
+    }
+
+    /**
+     * Remove a screenshot (owner-scoped): deletes the stored object and the
+     * reference. Returns false if it doesn't belong to the product.
+     *
+     * @throws CatalogException
+     */
+    public function deleteScreenshot(int $productId, int $sellerId, int $fileId): bool
+    {
+        $this->assertOwner($productId, $sellerId);
+
+        $match = null;
+        foreach ($this->files->forProduct($productId, 'screenshot') as $f) {
+            if ((int) $f['id'] === $fileId) {
+                $match = $f;
+                break;
+            }
+        }
+        if ($match === null) {
+            return false;
+        }
+
+        $this->storage->public()->delete((string) $match['storage_key']);
+        return $this->files->delete($fileId, $productId);
+    }
+
     /** @throws CatalogException */
     private function storeImage(int $productId, UploadedFile $image): string
     {

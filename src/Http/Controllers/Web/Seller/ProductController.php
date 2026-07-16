@@ -106,8 +106,42 @@ final class ProductController extends Controller
             'difficulties' => Difficulty::values(),
             'tiers'        => $this->tiers->forProduct((int) $id),
             'versions'     => $this->versions->forProduct((int) $id),
+            'screenshots'  => $this->media->screenshots((int) $id),
             'tags_value'   => implode(', ', $this->tags->namesFor($tagIds)),
         ]);
+    }
+
+    public function addScreenshot(Request $request, string $id): Response
+    {
+        $sellerId = $this->currentUserId($request) ?? 0;
+
+        if (!$request->hasFile('screenshot')) {
+            $this->flash($request, 'error', 'Please choose an image to upload.');
+            return $this->redirect('/seller/products/' . $id . '/edit');
+        }
+
+        try {
+            $this->media->addScreenshot((int) $id, $sellerId, $request->file('screenshot'));
+            $this->flash($request, 'success', 'Screenshot added to the gallery.');
+        } catch (CatalogException $e) {
+            $this->flash($request, 'error', $e->getMessage());
+        }
+
+        return $this->redirect('/seller/products/' . $id . '/edit');
+    }
+
+    public function deleteScreenshot(Request $request, string $id, string $fileId): Response
+    {
+        $sellerId = $this->currentUserId($request) ?? 0;
+
+        try {
+            $this->media->deleteScreenshot((int) $id, $sellerId, (int) $fileId);
+            $this->flash($request, 'success', 'Screenshot removed.');
+        } catch (CatalogException $e) {
+            $this->flash($request, 'error', $e->getMessage());
+        }
+
+        return $this->redirect('/seller/products/' . $id . '/edit');
     }
 
     public function update(Request $request, string $id): Response

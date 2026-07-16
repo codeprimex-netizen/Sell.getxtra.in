@@ -185,6 +185,8 @@ return static function (Router $router): void {
     $router->get('/seller/products/{id}/edit', [ProductController::class, 'edit'], ['auth', 'can:product.update']);
     $router->put('/seller/products/{id}', [ProductController::class, 'update'], ['auth', 'can:product.update', 'seller.verified']);
     $router->post('/seller/products/{id}/versions', [ProductVersionController::class, 'store'], ['auth', 'can:product.update', 'seller.verified']);
+    $router->post('/seller/products/{id}/screenshots', [ProductController::class, 'addScreenshot'], ['auth', 'can:product.update']);
+    $router->post('/seller/products/{id}/screenshots/{fileId}/delete', [ProductController::class, 'deleteScreenshot'], ['auth', 'can:product.update']);
     $router->post('/seller/products/{id}/submit', [ProductController::class, 'submit'], ['auth', 'can:product.update', 'seller.verified']);
     $router->post('/seller/products/{id}/archive', [ProductController::class, 'archive'], ['auth', 'can:product.update']);
 

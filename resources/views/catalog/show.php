@@ -47,7 +47,18 @@ $card = static function (array $p) use ($stars): string {
   </div>
 
   <?php if (!empty($product['thumbnail_url'])): ?>
-    <img src="<?= e((string) $product['thumbnail_url']) ?>" alt="" style="max-width:100%;border-radius:10px;margin:1rem 0">
+    <img src="<?= e((string) $product['thumbnail_url']) ?>" alt="<?= e((string) $product['title']) ?>" style="max-width:100%;border-radius:10px;margin:1rem 0">
+  <?php endif; ?>
+
+  <?php $screenshots = $screenshots ?? []; if ($screenshots !== []): ?>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin:.5rem 0 1rem">
+      <?php foreach ($screenshots as $s): ?>
+        <a href="<?= e((string) $s['url']) ?>" target="_blank" rel="noopener">
+          <img src="<?= e((string) $s['url']) ?>" alt="<?= e((string) $product['title']) ?> screenshot"
+               loading="lazy" style="width:100%;height:130px;object-fit:cover;border-radius:9px;border:1px solid #1e293b">
+        </a>
+      <?php endforeach; ?>
+    </div>
   <?php endif; ?>
 
   <div style="margin:.4rem 0 1rem">

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web;
 
 use App\Application\Catalog\CatalogService;
+use App\Application\Catalog\ProductMediaService;
 use App\Application\Catalog\RecentlyViewed;
 use App\Application\Review\WishlistService;
 use App\Domain\Catalog\CategoryRepositoryInterface;
@@ -26,6 +27,7 @@ final class CatalogController extends Controller
         private ReviewRepositoryInterface $reviews,
         private RecentlyViewed $recentlyViewed,
         private WishlistService $wishlist,
+        private ProductMediaService $media,
     ) {
     }
 
@@ -70,12 +72,13 @@ final class CatalogController extends Controller
         $wishlisted = $userId !== null && $this->wishlist->has($userId, $productId);
 
         return $this->view($request, 'catalog.show', array_merge($bundle, [
-            'reviews'    => $this->reviews->publishedForProduct($productId),
-            'related'    => $this->catalog->related($product),
-            'recent'     => $recent,
-            'wishlisted' => $wishlisted,
-            'jsonld'     => $this->jsonLd($bundle),
-            'wide'       => true,
+            'reviews'     => $this->reviews->publishedForProduct($productId),
+            'related'     => $this->catalog->related($product),
+            'recent'      => $recent,
+            'wishlisted'  => $wishlisted,
+            'screenshots' => $this->media->screenshots($productId), // resolved public URLs
+            'jsonld'      => $this->jsonLd($bundle),
+            'wide'        => true,
         ]));
     }
 
@@ -89,6 +92,7 @@ final class CatalogController extends Controller
             'name'        => (string) $product['title'],
             'description' => mb_substr(strip_tags((string) ($product['description'] ?? '')), 0, 300),
             'sku'         => 'PROD-' . (int) $product['id'],
+            'image'       => (string) ($product['thumbnail_url'] ?? ''),
             'offers'      => [
                 '@type'         => 'Offer',
                 'price'         => (string) $product['base_price'],
