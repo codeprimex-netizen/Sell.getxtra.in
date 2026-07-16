@@ -11,8 +11,8 @@ use App\Infrastructure\Queue\Job;
 /**
  * Moves seller earnings from pending to cleared once the refund window has
  * elapsed (Req 11.4). Scans paid orders older than the window and clears each
- * (idempotently via LedgerService::clearEarning). Runs on a schedule in
- * Phase 9; for now it is invocable via `bin/console clear-balances`.
+ * (idempotently via LedgerService::clearEarning). Invoked both by the
+ * scheduler's `clear_balances` task and on demand via `bin/console clear-balances`.
  */
 final class ClearSellerBalance implements Job
 {

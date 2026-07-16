@@ -7,9 +7,10 @@ namespace App\Infrastructure\Commerce;
 use App\Domain\Commerce\PurchaseCheckerInterface;
 
 /**
- * Placeholder purchase checker used until the orders/entitlements module
- * lands in Phase 5. Reports no purchases, so reviews are simply unverified
- * rather than blocked.
+ * Null-object purchase checker: reports no purchases, so reviews fall back to
+ * "unverified" rather than being blocked. The production binding is
+ * {@see EntitlementPurchaseChecker}; this remains for tests and as a safe
+ * fallback when entitlements are unavailable.
  */
 final class NullPurchaseChecker implements PurchaseCheckerInterface
 {

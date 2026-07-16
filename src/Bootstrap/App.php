@@ -54,7 +54,6 @@ use App\Infrastructure\Storage\StorageManager;
 use App\Domain\Commerce\PurchaseCheckerInterface;
 use App\Domain\Review\ReviewRepositoryInterface;
 use App\Domain\Review\WishlistRepositoryInterface;
-use App\Infrastructure\Commerce\NullPurchaseChecker;
 use App\Infrastructure\Persistence\PdoReviewRepository;
 use App\Infrastructure\Persistence\PdoWishlistRepository;
 use App\Infrastructure\Search\MeilisearchIndex;
@@ -353,7 +352,8 @@ final class App
         // Reviews & wishlist (Phase 4).
         $c->singleton(ReviewRepositoryInterface::class, static fn (Container $c) => new PdoReviewRepository($conn($c)));
         $c->singleton(WishlistRepositoryInterface::class, static fn (Container $c) => new PdoWishlistRepository($conn($c)));
-        $c->singleton(PurchaseCheckerInterface::class, static fn (): PurchaseCheckerInterface => new NullPurchaseChecker());
+        // PurchaseCheckerInterface is bound to the entitlement-backed checker in
+        // registerCommerceServices() (Req 7.2) — no null placeholder needed.
 
         // Search engine: use Meilisearch when configured, else the MySQL
         // FULLTEXT fallback via NullSearchIndex (Req 6.1 / 6.4).

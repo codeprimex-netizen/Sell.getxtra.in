@@ -8,8 +8,10 @@ use App\Infrastructure\Observability\Logger;
 use Throwable;
 
 /**
- * Executes jobs immediately in-process. Used in development and tests; the
- * async database/Redis driver arrives in Phase 9 behind the same interface.
+ * Executes {@see Job}s immediately in-process — the lightweight path for
+ * catalog/review side-effects (AV scan, indexing, rating recompute). The
+ * durable, retrying database/Redis-backed queue lives in the Phase 9 pipeline
+ * ({@see Dispatcher} + {@see QueueDriver} + {@see Worker}).
  */
 final class SyncQueue implements QueueInterface
 {
