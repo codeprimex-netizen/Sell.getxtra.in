@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Account\DashboardController;
 use App\Http\Controllers\Web\Account\SessionController;
+use App\Http\Controllers\Web\Admin\CategoryController as AdminCategoryController;
+use App\Http\Controllers\Web\Admin\CouponController as AdminCouponController;
+use App\Http\Controllers\Web\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Web\Admin\DisputeController as AdminDisputeController;
 use App\Http\Controllers\Web\Admin\ModerationController;
+use App\Http\Controllers\Web\Admin\ProductAdminController as AdminProductController;
+use App\Http\Controllers\Web\Admin\SettingsController as AdminSettingsController;
+use App\Http\Controllers\Web\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Web\Auth\EmailVerificationController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\PasswordResetController;
@@ -123,6 +130,36 @@ return static function (Router $router): void {
     $router->get('/admin/moderation', [ModerationController::class, 'queue'], ['auth', 'can:product.approve']);
     $router->post('/admin/moderation/{id}/approve', [ModerationController::class, 'approve'], ['auth', 'can:product.approve']);
     $router->post('/admin/moderation/{id}/reject', [ModerationController::class, 'reject'], ['auth', 'can:product.approve']);
+
+    // ── Admin console (Req 12) — back-office requires MFA (Req 3.4) ─
+    $router->get('/admin', [AdminDashboardController::class, 'index'], ['auth', 'mfa', 'can:report.view']);
+
+    $router->get('/admin/users', [AdminUserController::class, 'index'], ['auth', 'mfa', 'can:user.view']);
+    $router->post('/admin/users/{id}/suspend', [AdminUserController::class, 'suspend'], ['auth', 'mfa', 'can:user.suspend']);
+    $router->post('/admin/users/{id}/activate', [AdminUserController::class, 'activate'], ['auth', 'mfa', 'can:user.suspend']);
+    $router->post('/admin/users/{id}/roles/assign', [AdminUserController::class, 'assignRole'], ['auth', 'mfa', 'can:user.assign_role']);
+    $router->post('/admin/users/{id}/roles/remove', [AdminUserController::class, 'removeRole'], ['auth', 'mfa', 'can:user.assign_role']);
+
+    $router->get('/admin/categories', [AdminCategoryController::class, 'index'], ['auth', 'mfa', 'can:category.manage']);
+    $router->post('/admin/categories', [AdminCategoryController::class, 'store'], ['auth', 'mfa', 'can:category.manage']);
+    $router->post('/admin/categories/{id}/toggle', [AdminCategoryController::class, 'toggle'], ['auth', 'mfa', 'can:category.manage']);
+    $router->post('/admin/categories/{id}/delete', [AdminCategoryController::class, 'delete'], ['auth', 'mfa', 'can:category.manage']);
+
+    $router->get('/admin/coupons', [AdminCouponController::class, 'index'], ['auth', 'mfa', 'can:coupon.manage']);
+    $router->post('/admin/coupons', [AdminCouponController::class, 'store'], ['auth', 'mfa', 'can:coupon.manage']);
+    $router->post('/admin/coupons/{id}/toggle', [AdminCouponController::class, 'toggle'], ['auth', 'mfa', 'can:coupon.manage']);
+
+    $router->get('/admin/disputes', [AdminDisputeController::class, 'index'], ['auth', 'mfa', 'can:dispute.handle']);
+    $router->post('/admin/disputes/{id}/resolve', [AdminDisputeController::class, 'resolve'], ['auth', 'mfa', 'can:dispute.handle']);
+    $router->post('/admin/disputes/{id}/reject', [AdminDisputeController::class, 'reject'], ['auth', 'mfa', 'can:dispute.handle']);
+    $router->post('/admin/disputes/{id}/refund', [AdminDisputeController::class, 'refund'], ['auth', 'mfa', 'can:dispute.handle']);
+
+    $router->get('/admin/settings', [AdminSettingsController::class, 'index'], ['auth', 'mfa', 'can:settings.manage']);
+    $router->post('/admin/settings/flag', [AdminSettingsController::class, 'toggleFlag'], ['auth', 'mfa', 'can:feature_flag.manage']);
+    $router->post('/admin/settings/set', [AdminSettingsController::class, 'setSetting'], ['auth', 'mfa', 'can:settings.manage']);
+
+    $router->post('/admin/products/{id}/feature', [AdminProductController::class, 'feature'], ['auth', 'mfa', 'can:product.feature']);
+    $router->post('/admin/products/{id}/suspend', [AdminProductController::class, 'suspend'], ['auth', 'mfa', 'can:product.suspend']);
 
     // ── API version banner (surface expands in Phase 10) ──────────
     $router->get('/api/v1/ping', static fn (Request $r): Response =>

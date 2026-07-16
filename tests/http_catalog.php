@@ -66,6 +66,14 @@ $check('GET /download/{token} requires auth', $redirectsToLogin($make('GET', '/d
 $licenseRes = $kernel->handle($make('GET', '/api/v1/licenses/verify'));
 $check('GET /api/v1/licenses/verify is public JSON (not a redirect)', $licenseRes->status() !== 302);
 
+// Phase 8: admin console routes require auth (auth middleware runs before mfa/can).
+$check('GET /admin requires auth', $redirectsToLogin($make('GET', '/admin')));
+$check('GET /admin/users requires auth', $redirectsToLogin($make('GET', '/admin/users')));
+$check('GET /admin/coupons requires auth', $redirectsToLogin($make('GET', '/admin/coupons')));
+$check('GET /admin/disputes requires auth', $redirectsToLogin($make('GET', '/admin/disputes')));
+$check('GET /admin/settings requires auth', $redirectsToLogin($make('GET', '/admin/settings')));
+$check('POST /admin/users/1/suspend blocked without CSRF (419)', $kernel->handle($make('POST', '/admin/users/1/suspend'))->status() === 419);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

@@ -111,6 +111,7 @@ final class App
         $this->registerIdentityServices();
         $this->registerCatalogServices();
         $this->registerCommerceServices();
+        $this->registerAdminServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -265,6 +266,27 @@ final class App
         // Audit trail (Req 15.5) — used by secure downloads and back-office.
         $c->singleton(AuditLogRepositoryInterface::class, static fn (Container $c) =>
             new PdoAuditLogRepository($conn($c)));
+    }
+
+    /**
+     * Bind back-office repositories (Phase 8). Admin application services
+     * autowire from these plus the identity/commerce bindings above.
+     */
+    private function registerAdminServices(): void
+    {
+        $c = $this->container;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(\App\Domain\Support\DisputeRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoDisputeRepository($conn($c)));
+        $c->singleton(\App\Domain\Admin\AdminUserRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoAdminUserRepository($conn($c)));
+        $c->singleton(\App\Domain\Admin\SettingsRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoSettingsRepository($conn($c)));
+        $c->singleton(\App\Domain\Admin\FeatureFlagRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoFeatureFlagRepository($conn($c)));
+        $c->singleton(\App\Domain\Admin\ReportRepositoryInterface::class,
+            static fn (Container $c) => new \App\Infrastructure\Persistence\PdoReportRepository($conn($c)));
     }
 
     private function registerHttp(): void

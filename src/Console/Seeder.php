@@ -31,8 +31,8 @@ final class Seeder
         'payout.request', 'payout.process',
         'review.moderate',
         'user.view', 'user.suspend', 'user.assign_role',
-        'category.manage', 'coupon.manage',
-        'settings.manage', 'feature_flag.manage',
+        'category.manage', 'coupon.manage', 'product.feature',
+        'settings.manage', 'feature_flag.manage', 'report.view',
         'dispute.handle', 'ticket.handle',
     ];
 
@@ -44,9 +44,10 @@ final class Seeder
         'moderator' => ['product.approve', 'product.suspend', 'review.moderate'],
         'finance'   => ['order.view', 'order.refund', 'payout.process'],
         'admin'     => [
-            'product.approve', 'product.suspend', 'order.view', 'order.refund',
-            'review.moderate', 'user.view', 'user.suspend', 'category.manage',
-            'coupon.manage', 'dispute.handle', 'ticket.handle',
+            'product.approve', 'product.suspend', 'product.feature', 'order.view', 'order.refund',
+            'review.moderate', 'user.view', 'user.suspend', 'user.assign_role', 'category.manage',
+            'coupon.manage', 'settings.manage', 'feature_flag.manage', 'report.view',
+            'dispute.handle', 'ticket.handle',
         ],
         'super_admin' => ['*'],
     ];

@@ -121,6 +121,11 @@ final class InMemoryRoleRepository implements RoleRepositoryInterface
 
     public function removeRole(int $userId, int $roleId): void
     {
+        // findByName() assigns id = crc32(name); reverse-match to drop the role.
+        $this->userRoles[$userId] = array_values(array_filter(
+            $this->userRoles[$userId] ?? [],
+            static fn (string $name): bool => crc32($name) !== $roleId,
+        ));
     }
 
     public function rolesForUser(int $userId): array

@@ -18,6 +18,14 @@ final class PdoCategoryRepository extends Repository implements CategoryReposito
         return $stmt !== false ? $stmt->fetchAll() : [];
     }
 
+    public function all(int $limit = 100, int $offset = 0): array
+    {
+        $stmt = $this->connection->read()->query(
+            "SELECT * FROM {$this->table} ORDER BY sort_order ASC, name ASC"
+        );
+        return $stmt !== false ? $stmt->fetchAll() : [];
+    }
+
     public function findById(int $id): ?array
     {
         return $this->find($id);

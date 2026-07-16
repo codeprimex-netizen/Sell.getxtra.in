@@ -291,6 +291,11 @@ final class InMemoryCategoryRepository implements CategoryRepositoryInterface
 
     public function allActive(): array
     {
+        return array_values(array_filter($this->rows, static fn ($r) => (int) ($r['is_active'] ?? 1) === 1));
+    }
+
+    public function all(): array
+    {
         return array_values($this->rows);
     }
 
@@ -315,6 +320,21 @@ final class InMemoryCategoryRepository implements CategoryRepositoryInterface
         $data['id'] = $id;
         $this->rows[$id] = $data;
         return $id;
+    }
+
+    public function update(int $id, array $data): bool
+    {
+        if (!isset($this->rows[$id])) {
+            return false;
+        }
+        $this->rows[$id] = array_merge($this->rows[$id], $data);
+        return true;
+    }
+
+    public function delete(int $id): bool
+    {
+        unset($this->rows[$id]);
+        return true;
     }
 }
 

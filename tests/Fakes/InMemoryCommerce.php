@@ -120,6 +120,42 @@ final class InMemoryCouponRepository implements CouponRepositoryInterface
     {
         return 0;
     }
+
+    public function all(int $limit = 100, int $offset = 0): array
+    {
+        return array_values($this->byCode);
+    }
+
+    public function findById(int $id): ?array
+    {
+        foreach ($this->byCode as $c) {
+            if ((int) $c['id'] === $id) {
+                return $c;
+            }
+        }
+        return null;
+    }
+
+    public function create(array $data): int
+    {
+        $id = count($this->byCode) + 1;
+        $data['id'] = $id;
+        $data['used_count'] = $data['used_count'] ?? 0;
+        $data['is_active'] = $data['is_active'] ?? 1;
+        $this->byCode[strtoupper((string) $data['code'])] = $data;
+        return $id;
+    }
+
+    public function setActive(int $id, bool $active): bool
+    {
+        foreach ($this->byCode as &$c) {
+            if ((int) $c['id'] === $id) {
+                $c['is_active'] = $active ? 1 : 0;
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
 final class InMemoryOrderRepository implements OrderRepositoryInterface
