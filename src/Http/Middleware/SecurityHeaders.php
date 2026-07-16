@@ -14,7 +14,7 @@ use Closure;
  */
 final class SecurityHeaders implements MiddlewareInterface
 {
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$args): Response
     {
         /** @var Response $response */
         $response = $next($request);

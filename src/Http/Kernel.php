@@ -19,13 +19,22 @@ final class Kernel
     /** @var array<int, class-string> Global middleware, outermost first. */
     private array $globalMiddleware;
 
+    /** @var array<string, class-string> Alias => middleware class. */
+    private array $aliases;
+
+    /**
+     * @param array<int, class-string>       $globalMiddleware
+     * @param array<string, class-string>    $aliases
+     */
     public function __construct(
         private Container $container,
         private Router $router,
         private Logger $logger,
         array $globalMiddleware = [],
+        array $aliases = [],
     ) {
         $this->globalMiddleware = $globalMiddleware;
+        $this->aliases = $aliases;
     }
 
     public function handle(Request $request): Response
@@ -58,22 +67,47 @@ final class Kernel
     }
 
     /**
-     * @param array<int, class-string> $middleware
+     * Build and run the middleware pipeline. Each entry is either a
+     * class-string or an "alias:arg1,arg2" string; aliases resolve via the
+     * alias map, and comma-separated args are passed to handle().
+     *
+     * @param array<int, string> $middleware
      */
     private function runPipeline(Request $request, array $middleware, Closure $core): Response
     {
         $pipeline = array_reduce(
             array_reverse($middleware),
-            function (Closure $next, string $class): Closure {
-                return function (Request $request) use ($next, $class): Response {
+            function (Closure $next, string $definition): Closure {
+                return function (Request $request) use ($next, $definition): Response {
+                    [$class, $args] = $this->resolveMiddleware($definition);
                     $instance = $this->container->get($class);
-                    return $instance->handle($request, $next);
+                    return $instance->handle($request, $next, ...$args);
                 };
             },
             $core
         );
 
         return $pipeline($request);
+    }
+
+    /**
+     * Resolve a middleware definition to [class-string, args].
+     *
+     * @return array{0:string, 1:array<int,string>}
+     */
+    private function resolveMiddleware(string $definition): array
+    {
+        $args = [];
+        $name = $definition;
+
+        if (str_contains($definition, ':')) {
+            [$name, $paramString] = explode(':', $definition, 2);
+            $args = array_map('trim', explode(',', $paramString));
+        }
+
+        $class = $this->aliases[$name] ?? $name;
+
+        return [$class, $args];
     }
 
     private function notFound(Request $request): Response

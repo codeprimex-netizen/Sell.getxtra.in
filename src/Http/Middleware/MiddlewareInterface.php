@@ -12,9 +12,10 @@ use Closure;
  * Contract for pipeline middleware.
  *
  * Implementations either short-circuit by returning a Response, or call
- * $next($request) to pass control down the pipeline.
+ * $next($request) to pass control down the pipeline. Optional string args
+ * come from parameterized route middleware (e.g. "can:product.approve").
  */
 interface MiddlewareInterface
 {
-    public function handle(Request $request, Closure $next): Response;
+    public function handle(Request $request, Closure $next, string ...$args): Response;
 }
