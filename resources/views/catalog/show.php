@@ -58,7 +58,11 @@ $card = static function (array $p) use ($stars): string {
 
   <div style="display:flex;gap:.6rem;align-items:center;margin-top:1rem">
     <?php if ($purchasable): ?>
-      <button type="button" style="width:auto;margin:0">Buy now (checkout in Phase 5)</button>
+      <form action="/cart/add" method="post" style="margin:0">
+        <input type="hidden" name="_token" value="<?= e($csrf_token ?? '') ?>">
+        <input type="hidden" name="product_id" value="<?= (int) $product['id'] ?>">
+        <button type="submit" style="width:auto;margin:0">Add to cart</button>
+      </form>
     <?php else: ?>
       <span style="color:#94a3b8">Not available for purchase yet.</span>
     <?php endif; ?>

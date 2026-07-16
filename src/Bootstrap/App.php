@@ -60,6 +60,27 @@ use App\Infrastructure\Persistence\PdoWishlistRepository;
 use App\Infrastructure\Search\MeilisearchIndex;
 use App\Infrastructure\Search\NullSearchIndex;
 use App\Infrastructure\Search\SearchIndex;
+use App\Domain\Commerce\CartRepositoryInterface;
+use App\Domain\Commerce\CouponRepositoryInterface;
+use App\Domain\Commerce\EntitlementRepositoryInterface;
+use App\Domain\Commerce\LedgerRepositoryInterface;
+use App\Domain\Commerce\OrderRepositoryInterface;
+use App\Domain\Commerce\PaymentRepositoryInterface;
+use App\Domain\Commerce\RefundRepositoryInterface;
+use App\Domain\Commerce\WebhookEventRepositoryInterface;
+use App\Infrastructure\Commerce\EntitlementPurchaseChecker;
+use App\Infrastructure\Payment\OfflineGateway;
+use App\Infrastructure\Payment\PaymentGatewayRegistry;
+use App\Infrastructure\Payment\RazorpayGateway;
+use App\Infrastructure\Payment\StripeGateway;
+use App\Infrastructure\Persistence\PdoCartRepository;
+use App\Infrastructure\Persistence\PdoCouponRepository;
+use App\Infrastructure\Persistence\PdoEntitlementRepository;
+use App\Infrastructure\Persistence\PdoLedgerRepository;
+use App\Infrastructure\Persistence\PdoOrderRepository;
+use App\Infrastructure\Persistence\PdoPaymentRepository;
+use App\Infrastructure\Persistence\PdoRefundRepository;
+use App\Infrastructure\Persistence\PdoWebhookEventRepository;
 
 /**
  * Application bootstrapper.
@@ -87,6 +108,7 @@ final class App
         $this->registerCoreServices();
         $this->registerIdentityServices();
         $this->registerCatalogServices();
+        $this->registerCommerceServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -193,6 +215,50 @@ final class App
             }
             return new NullSearchIndex();
         });
+    }
+
+    /**
+     * Bind commerce repositories, payment gateways, and the entitlement-backed
+     * purchase checker (Phase 5). Application services autowire from these.
+     */
+    private function registerCommerceServices(): void
+    {
+        $c = $this->container;
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(CartRepositoryInterface::class, static fn (Container $c) => new PdoCartRepository($conn($c)));
+        $c->singleton(CouponRepositoryInterface::class, static fn (Container $c) => new PdoCouponRepository($conn($c)));
+        $c->singleton(OrderRepositoryInterface::class, static fn (Container $c) => new PdoOrderRepository($conn($c)));
+        $c->singleton(PaymentRepositoryInterface::class, static fn (Container $c) => new PdoPaymentRepository($conn($c)));
+        $c->singleton(WebhookEventRepositoryInterface::class, static fn (Container $c) => new PdoWebhookEventRepository($conn($c)));
+        $c->singleton(EntitlementRepositoryInterface::class, static fn (Container $c) => new PdoEntitlementRepository($conn($c)));
+        $c->singleton(LedgerRepositoryInterface::class, static fn (Container $c) => new PdoLedgerRepository($conn($c)));
+        $c->singleton(RefundRepositoryInterface::class, static fn (Container $c) => new PdoRefundRepository($conn($c)));
+
+        // Payment gateways: offline (dev) always available; real gateways when configured.
+        $c->singleton(PaymentGatewayRegistry::class, static function (): PaymentGatewayRegistry {
+            $registry = new PaymentGatewayRegistry();
+            $registry->register(new OfflineGateway((string) Config::get('commerce.offline_secret', 'offline-dev-secret')));
+
+            if (Env::get('RAZORPAY_KEY_ID')) {
+                $registry->register(new RazorpayGateway(
+                    (string) Env::get('RAZORPAY_KEY_ID', ''),
+                    (string) Env::get('RAZORPAY_KEY_SECRET', ''),
+                    (string) Env::get('RAZORPAY_WEBHOOK_SECRET', ''),
+                ));
+            }
+            if (Env::get('STRIPE_SECRET')) {
+                $registry->register(new StripeGateway(
+                    (string) Env::get('STRIPE_SECRET', ''),
+                    (string) Env::get('STRIPE_WEBHOOK_SECRET', ''),
+                ));
+            }
+            return $registry;
+        });
+
+        // Now that entitlements exist, use the real purchase checker (Req 7.2).
+        $c->singleton(PurchaseCheckerInterface::class, static fn (Container $c) =>
+            new EntitlementPurchaseChecker($c->get(EntitlementRepositoryInterface::class)));
     }
 
     private function registerHttp(): void

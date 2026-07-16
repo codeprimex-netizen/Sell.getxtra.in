@@ -10,9 +10,13 @@ use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\PasswordResetController;
 use App\Http\Controllers\Web\Auth\RegisterController;
 use App\Http\Controllers\Web\Auth\TwoFactorController;
+use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CatalogController;
+use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\OrderController;
+use App\Http\Controllers\Web\PaymentWebhookController;
 use App\Http\Controllers\Web\ReviewController;
 use App\Http\Controllers\Web\SearchController;
 use App\Http\Controllers\Web\Seller\ProductController;
@@ -79,6 +83,22 @@ return static function (Router $router): void {
 
     $router->get('/account/wishlist', [WishlistController::class, 'index'], ['auth']);
     $router->post('/wishlist/toggle', [WishlistController::class, 'toggle']);
+
+    // ── Cart & checkout (Req 8/9) ─────────────────────────────────
+    $router->get('/cart', [CartController::class, 'index']);
+    $router->post('/cart/add', [CartController::class, 'add']);
+    $router->post('/cart/remove', [CartController::class, 'remove']);
+    $router->get('/checkout', [CheckoutController::class, 'show'], ['auth']);
+    $router->post('/checkout', [CheckoutController::class, 'process'], ['auth', 'throttle:20,1']);
+
+    // ── Payment webhooks (signature-authenticated, CSRF-exempt) ───
+    $router->post('/payments/{gateway}/webhook', [PaymentWebhookController::class, 'handle']);
+    $router->get('/payments/offline/pay/{orderNumber}', [PaymentWebhookController::class, 'offlinePay'], ['auth']);
+
+    // ── Orders & downloads (Req 8/10) ─────────────────────────────
+    $router->get('/orders', [OrderController::class, 'index'], ['auth']);
+    $router->get('/orders/{id}', [OrderController::class, 'show'], ['auth']);
+    $router->get('/account/library', [OrderController::class, 'library'], ['auth']);
 
     // ── Seller product management (Req 4 / 5) ─────────────────────
     $router->get('/seller/products', [ProductController::class, 'index'], ['auth', 'can:product.create']);

@@ -32,6 +32,8 @@ interface ProductRepositoryInterface
 
     public function incrementViews(int $id): void;
 
+    public function incrementSales(int $id): void;
+
     /**
      * List a seller's products (any status).
      *

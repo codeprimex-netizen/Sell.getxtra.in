@@ -37,6 +37,11 @@ final class PdoProductRepository extends Repository implements ProductRepository
         return $row === false ? null : $row;
     }
 
+    public function create(array $data): int
+    {
+        return $this->insert($data);
+    }
+
     public function slugExists(string $slug, ?int $ignoreId = null): bool
     {
         $sql = "SELECT 1 FROM {$this->table} WHERE slug = :slug";
@@ -79,6 +84,14 @@ final class PdoProductRepository extends Repository implements ProductRepository
     {
         $stmt = $this->connection->write()->prepare(
             "UPDATE {$this->table} SET views = views + 1 WHERE id = :id"
+        );
+        $stmt->execute(['id' => $id]);
+    }
+
+    public function incrementSales(int $id): void
+    {
+        $stmt = $this->connection->write()->prepare(
+            "UPDATE {$this->table} SET sales_count = sales_count + 1 WHERE id = :id"
         );
         $stmt->execute(['id' => $id]);
     }

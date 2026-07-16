@@ -75,8 +75,26 @@ final class Seeder
         $this->assignRolePermissions($pdo);
         $this->seedFeatureFlags($pdo);
         $this->seedCategories($pdo);
+        $this->seedCoupons($pdo);
 
         fwrite(STDOUT, "Seeding complete.\n");
+    }
+
+    private function seedCoupons(PDO $pdo): void
+    {
+        try {
+            $pdo->query('SELECT 1 FROM coupons LIMIT 1');
+        } catch (\Throwable) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            "INSERT IGNORE INTO coupons (code, type, value, scope, min_order, max_uses, is_active)
+             VALUES (:code, :type, :value, 'all', :min_order, :max_uses, 1)"
+        );
+        $stmt->execute(['code' => 'WELCOME10', 'type' => 'percent', 'value' => 10, 'min_order' => 100, 'max_uses' => 1000]);
+        $stmt->execute(['code' => 'FLAT50', 'type' => 'fixed', 'value' => 50, 'min_order' => 200, 'max_uses' => 500]);
+        fwrite(STDOUT, "  ✔ coupons seeded\n");
     }
 
     private function seedCategories(PDO $pdo): void

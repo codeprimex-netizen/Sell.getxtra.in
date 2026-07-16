@@ -28,6 +28,7 @@ final class Request
         private array $cookies = [],
         private array $files = [],
         private array $attributes = [],
+        private string $rawBody = '',
     ) {
     }
 
@@ -44,11 +45,11 @@ final class Request
         $path = parse_url($uri, PHP_URL_PATH) ?: '/';
         $path = '/' . trim((string) $path, '/');
 
+        $rawBody = file_get_contents('php://input') ?: '';
         $body = $_POST;
         $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-        if (str_contains($contentType, 'application/json')) {
-            $raw = file_get_contents('php://input') ?: '';
-            $decoded = json_decode($raw, true);
+        if (str_contains($contentType, 'application/json') && $rawBody !== '') {
+            $decoded = json_decode($rawBody, true);
             if (is_array($decoded)) {
                 $body = $decoded;
             }
@@ -62,7 +63,14 @@ final class Request
             server: $_SERVER,
             cookies: $_COOKIE,
             files: $_FILES,
+            rawBody: $rawBody,
         );
+    }
+
+    /** Raw request body, needed to verify gateway webhook signatures. */
+    public function rawBody(): string
+    {
+        return $this->rawBody;
     }
 
     public function method(): string

@@ -76,7 +76,8 @@ final class PdoReviewRepository extends Repository implements ReviewRepositoryIn
         return $stmt->execute(['r' => $reply, 'id' => $id]);
     }
 
-    public function delete(int $id): bool
+    // Widened param type keeps compatibility with base Repository::delete().
+    public function delete(int|string $id): bool
     {
         $stmt = $this->connection->write()->prepare(
             "DELETE FROM {$this->table} WHERE id = :id"

@@ -35,7 +35,9 @@ final class PdoProductFileRepository extends Repository implements ProductFileRe
         return $stmt->fetchAll();
     }
 
-    public function delete(int $id, int $productId): bool
+    // Widened first param + optional second keeps compatibility with the
+    // base Repository::delete(int|string $id): bool signature.
+    public function delete(int|string $id, int $productId = 0): bool
     {
         $stmt = $this->connection->write()->prepare(
             "DELETE FROM {$this->table} WHERE id = :id AND product_id = :p"

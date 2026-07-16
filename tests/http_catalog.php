@@ -51,6 +51,15 @@ $check('POST /wishlist/toggle blocked without CSRF (419)', $kernel->handle($make
 $check('POST /product/1/reviews blocked without CSRF (419)', $kernel->handle($make('POST', '/product/1/reviews'))->status() === 419);
 $check('POST /admin/reviews/1/moderate blocked without CSRF (419)', $kernel->handle($make('POST', '/admin/reviews/1/moderate'))->status() === 419);
 
+// Phase 5 route wiring + guards.
+$check('GET /checkout requires auth', $redirectsToLogin($make('GET', '/checkout')));
+$check('GET /orders requires auth', $redirectsToLogin($make('GET', '/orders')));
+$check('GET /account/library requires auth', $redirectsToLogin($make('GET', '/account/library')));
+$check('POST /cart/add blocked without CSRF (419)', $kernel->handle($make('POST', '/cart/add'))->status() === 419);
+$check('POST /checkout blocked without CSRF (419)', $kernel->handle($make('POST', '/checkout'))->status() === 419);
+// Webhook is CSRF-exempt (signature-authenticated) -> not 419; bad signature -> 400.
+$check('POST /payments/offline/webhook is CSRF-exempt, rejects bad signature (400)', $kernel->handle($make('POST', '/payments/offline/webhook'))->status() === 400);
+
 echo "\n";
 echo $failures === 0 ? "All Phase 3 HTTP checks passed.\n" : "{$failures} check(s) failed.\n";
 exit($failures === 0 ? 0 : 1);

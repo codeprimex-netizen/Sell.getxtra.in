@@ -76,6 +76,14 @@ final class Config
             'security' => [
                 'rate_limit_enabled' => (bool) Env::get('RATE_LIMIT_ENABLED', true),
             ],
+            'commerce' => [
+                'currency'          => Env::get('COMMERCE_CURRENCY', 'INR'),
+                'commission_rate'   => (float) Env::get('COMMERCE_COMMISSION_RATE', 20),   // % platform cut
+                'tax_rate'          => (float) Env::get('COMMERCE_TAX_RATE', 18),           // % GST
+                'refund_window_days' => (int) Env::get('COMMERCE_REFUND_WINDOW_DAYS', 14),
+                'default_gateway'   => Env::get('PAYMENT_DEFAULT_GATEWAY', 'offline'),
+                'offline_secret'    => Env::get('PAYMENT_OFFLINE_SECRET', 'offline-dev-secret'),
+            ],
         ];
 
         self::$booted = true;

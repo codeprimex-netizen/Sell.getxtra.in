@@ -163,6 +163,13 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
     {
         return $this->update($productId, ['avg_rating' => $avgRating, 'rating_count' => $ratingCount]);
     }
+
+    public function incrementSales(int $id): void
+    {
+        if (isset($this->rows[$id])) {
+            $this->rows[$id]['sales_count'] = (int) ($this->rows[$id]['sales_count'] ?? 0) + 1;
+        }
+    }
 }
 
 final class InMemoryProductVersionRepository implements ProductVersionRepositoryInterface
