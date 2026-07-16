@@ -57,6 +57,18 @@ if (!function_exists('url')) {
     }
 }
 
+if (!function_exists('asset')) {
+    /**
+     * Build a fingerprinted, CDN-aware URL for a static asset (Req 16.2).
+     */
+    function asset(string $path): string
+    {
+        /** @var App\Infrastructure\Assets\AssetManager $assets */
+        $assets = app(App\Infrastructure\Assets\AssetManager::class);
+        return $assets->url($path);
+    }
+}
+
 if (!function_exists('money')) {
     /**
      * Format a decimal amount with a currency prefix.

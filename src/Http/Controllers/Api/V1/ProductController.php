@@ -20,10 +20,25 @@ final class ProductController extends ApiController
 
     public function index(Request $request): Response
     {
-        $page = $this->page($request);
         $perPage = $this->perPage($request, 20, 50);
         $categoryId = ($c = $request->query('category_id')) !== null ? (int) $c : null;
 
+        // Keyset (seek) pagination when a cursor is supplied — stable + index-only
+        // for deep lists (Req 16.4). Falls back to offset paging otherwise.
+        if ($request->query('cursor') !== null || $request->query('mode') === 'keyset') {
+            $after = ($cur = $request->query('cursor')) !== null && $cur !== '' ? (int) $cur : null;
+            $rows = $this->products->listApprovedKeyset($categoryId, $after, $perPage);
+            $items = array_map([$this, 'present'], $rows);
+            $next = $rows === [] ? null : (int) $rows[array_key_last($rows)]['id'];
+
+            return $this->ok($request, $items, [
+                'per_page'    => $perPage,
+                'count'       => count($items),
+                'next_cursor' => $next,
+            ]);
+        }
+
+        $page = $this->page($request);
         $rows = $this->products->listApproved($categoryId, $perPage, ($page - 1) * $perPage);
         $items = array_map([$this, 'present'], $rows);
 

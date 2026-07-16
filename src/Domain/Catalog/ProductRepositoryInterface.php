@@ -49,6 +49,16 @@ interface ProductRepositoryInterface
     public function listApproved(?int $categoryId = null, int $limit = 24, int $offset = 0): array;
 
     /**
+     * Keyset (seek) pagination over approved products for deep, stable lists
+     * without OFFSET scans (Req 16.4). Returns rows with id < $afterId ordered
+     * by id DESC; pass null for the first page. The next cursor is the id of
+     * the last row returned.
+     *
+     * @return array<int, array<string,mixed>>
+     */
+    public function listApprovedKeyset(?int $categoryId = null, ?int $afterId = null, int $limit = 24): array;
+
+    /**
      * List products in a given status (moderation queue).
      *
      * @return array<int, array<string,mixed>>

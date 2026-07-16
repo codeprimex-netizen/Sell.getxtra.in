@@ -131,6 +131,31 @@ final class PdoProductRepository extends Repository implements ProductRepository
         return $stmt->fetchAll();
     }
 
+    public function listApprovedKeyset(?int $categoryId = null, ?int $afterId = null, int $limit = 24): array
+    {
+        $sql = "SELECT * FROM {$this->table}
+                WHERE status = 'approved' AND scan_status = 'clean' AND deleted_at IS NULL";
+        $params = [];
+        if ($categoryId !== null) {
+            $sql .= ' AND category_id = :cat';
+            $params['cat'] = $categoryId;
+        }
+        if ($afterId !== null) {
+            // Seek: only rows past the cursor. Uses the PK index — no OFFSET scan.
+            $sql .= ' AND id < :after';
+            $params['after'] = $afterId;
+        }
+        $sql .= ' ORDER BY id DESC LIMIT :lim';
+
+        $stmt = $this->connection->read()->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, PDO::PARAM_INT);
+        }
+        $stmt->bindValue('lim', max(1, min($limit, 100)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     public function listByStatus(string $status, int $limit = 50, int $offset = 0): array
     {
         $stmt = $this->connection->read()->prepare(

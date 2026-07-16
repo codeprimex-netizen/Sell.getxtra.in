@@ -124,13 +124,13 @@ Each task references the requirement IDs (`Req n`) it fulfills. `[M]/[S]/[C]` = 
 - [x] 12.5 Alerting (error rate, P95 latency, queue backlog, payment failures, DLQ) + on-call _(Req 15.6)_ **[M]**
 
 ## Phase 13 — Performance, Scale & HA
-- [ ] 13.1 Redis caching (object/fragment/page) + **tag-based invalidation** _(Req 16.1)_ **[M]**
-- [ ] 13.2 CDN for assets/media + cache headers + fingerprinting _(Req 16.2)_ **[M]**
-- [ ] 13.3 Route reads to **replicas**; fix N+1; keyset pagination _(Req 16.3, 16.4)_ **[M]**
-- [ ] 13.4 Stateless app tier behind LB; independent worker scaling _(Req 17.1, 17.2)_ **[M]**
-- [ ] 13.5 DB replication + documented failover _(Req 17.3)_ **[M]**
-- [ ] 13.6 **Load/performance testing** (k6/JMeter) vs SLOs; tune to P95 ≤ 400ms _(Req 16.5, 24.3)_ **[M]**
-- [ ] 13.7 Backup/restore + **DR** drill (RPO ≤ 15m, RTO ≤ 1h) _(Req 17.5, 22.2)_ **[M]**
+- [x] 13.1 Redis caching (object/fragment/page) + **tag-based invalidation** _(Req 16.1)_ **[M]**
+- [x] 13.2 CDN for assets/media + cache headers + fingerprinting _(Req 16.2)_ **[M]**
+- [x] 13.3 Route reads to **replicas**; fix N+1; keyset pagination _(Req 16.3, 16.4)_ **[M]**
+- [x] 13.4 Stateless app tier behind LB; independent worker scaling _(Req 17.1, 17.2)_ **[M]**
+- [x] 13.5 DB replication + documented failover _(Req 17.3)_ **[M]**
+- [x] 13.6 **Load/performance testing** (k6/JMeter) vs SLOs; tune to P95 ≤ 400ms _(Req 16.5, 24.3)_ **[M]**
+- [x] 13.7 Backup/restore + **DR** drill (RPO ≤ 15m, RTO ≤ 1h) _(Req 17.5, 22.2)_ **[M]**
 
 ## Phase 14 — CI/CD & Quality Gates
 - [ ] 14.1 CI: lint (PHPCS) → static analysis (PHPStan/Psalm) → tests → build → security scan _(Req 23.1)_ **[M]**

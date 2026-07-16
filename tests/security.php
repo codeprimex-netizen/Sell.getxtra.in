@@ -41,7 +41,11 @@ echo "=== Security static-analysis guard (" . count($srcFiles) . " source files)
 
 // ── 1. Superglobal access is confined to the HTTP request adapter ──
 echo "\n-- Input handling --\n";
-$superglobalAllowlist = ['src/Http/Request.php', 'src/Http/UploadedFile.php'];
+$superglobalAllowlist = [
+    'src/Http/Request.php',
+    'src/Http/UploadedFile.php',
+    'src/Http/Session/CacheSessionStore.php', // HTTP session adapter: reads its own cookie
+];
 $superglobalOffenders = [];
 foreach ($srcFiles as $file) {
     if (in_array($rel($file), $superglobalAllowlist, true)) {

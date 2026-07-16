@@ -104,6 +104,22 @@ final class InMemoryProductRepository implements ProductRepositoryInterface
         }));
     }
 
+    public function listApprovedKeyset(?int $categoryId = null, ?int $afterId = null, int $limit = 24): array
+    {
+        $rows = array_values(array_filter($this->rows, static function ($r) use ($categoryId, $afterId) {
+            $ok = $r['status'] === 'approved' && ($r['scan_status'] ?? '') === 'clean';
+            if ($categoryId !== null) {
+                $ok = $ok && (int) ($r['category_id'] ?? 0) === $categoryId;
+            }
+            if ($afterId !== null) {
+                $ok = $ok && (int) $r['id'] < $afterId;
+            }
+            return $ok;
+        }));
+        usort($rows, static fn ($a, $b) => (int) $b['id'] <=> (int) $a['id']);
+        return array_slice($rows, 0, max(1, min($limit, 100)));
+    }
+
     public function listByStatus(string $status, int $limit = 50, int $offset = 0): array
     {
         return array_values(array_filter($this->rows, static fn ($r) => $r['status'] === $status));

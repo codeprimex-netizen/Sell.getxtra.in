@@ -189,7 +189,50 @@ final class App
         $c->singleton(RateLimiter::class, static fn (): RateLimiter =>
             new RateLimiter($basePath . '/storage/cache/ratelimit'));
 
-        $c->singleton(SessionStore::class, static fn (): SessionStore => new NativeSessionStore());
+        // Shared cache (Req 16.1): Redis in production, file offline/dev. Falls
+        // back to file when ext-redis is unavailable so the app still boots.
+        $c->singleton(\App\Infrastructure\Cache\CacheInterface::class, static function () use ($basePath): \App\Infrastructure\Cache\CacheInterface {
+            $driver = (string) Config::get('cache.driver', 'file');
+            if ($driver === 'array') {
+                return new \App\Infrastructure\Cache\ArrayCache();
+            }
+            if ($driver === 'redis' && class_exists(\Redis::class)) {
+                try {
+                    $redis = new \Redis();
+                    $redis->connect((string) Config::get('redis.host', '127.0.0.1'), (int) Config::get('redis.port', 6379));
+                    $pw = Config::get('redis.password');
+                    if (is_string($pw) && $pw !== '') {
+                        $redis->auth($pw);
+                    }
+                    return new \App\Infrastructure\Cache\RedisCache($redis, (string) Config::get('cache.prefix', 'gx:'));
+                } catch (\Throwable) {
+                    // fall through to file cache
+                }
+            }
+            return new \App\Infrastructure\Cache\FileCache($basePath . '/storage/cache/data');
+        });
+
+        // Asset URLs with CDN + fingerprinting (Req 16.2).
+        $c->singleton(\App\Infrastructure\Assets\AssetManager::class, static function () use ($basePath): \App\Infrastructure\Assets\AssetManager {
+            return new \App\Infrastructure\Assets\AssetManager(
+                $basePath . '/public',
+                (string) Config::get('storage.cdn_url', ''),
+                (string) Config::get('assets.manifest', ''),
+            );
+        });
+
+        // Session store: cache-backed (stateless tier) when configured, else native.
+        $c->singleton(SessionStore::class, static function (Container $c): SessionStore {
+            if (in_array((string) Config::get('session.driver', 'file'), ['cache', 'redis'], true)) {
+                return new \App\Http\Session\CacheSessionStore(
+                    $c->get(\App\Infrastructure\Cache\CacheInterface::class),
+                    'gx_session',
+                    (int) Config::get('session.lifetime', 120),
+                    (bool) Config::get('session.secure', true),
+                );
+            }
+            return new NativeSessionStore();
+        });
 
         // Secrets provider (Req 14.6): file/Vault-backed in production, env in dev.
         $c->singleton(\App\Infrastructure\Security\Secrets\SecretsManager::class, static function (): \App\Infrastructure\Security\Secrets\SecretsManager {
@@ -246,7 +289,17 @@ final class App
         $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
 
         $c->singleton(ProductRepositoryInterface::class, static fn (Container $c) => new PdoProductRepository($conn($c)));
-        $c->singleton(CategoryRepositoryInterface::class, static fn (Container $c) => new PdoCategoryRepository($conn($c)));
+        $c->singleton(CategoryRepositoryInterface::class, static function (Container $c) use ($conn) {
+            $repo = new PdoCategoryRepository($conn($c));
+            if (!(bool) Config::get('cache.enabled', true)) {
+                return $repo;
+            }
+            // Read-through cache for hot, rarely-changing category data (Req 16.1).
+            return new \App\Infrastructure\Persistence\CachedCategoryRepository(
+                $repo,
+                $c->get(\App\Infrastructure\Cache\CacheInterface::class),
+            );
+        });
         $c->singleton(TagRepositoryInterface::class, static fn (Container $c) => new PdoTagRepository($conn($c)));
         $c->singleton(LicenseTierRepositoryInterface::class, static fn (Container $c) => new PdoLicenseTierRepository($conn($c)));
         $c->singleton(ProductVersionRepositoryInterface::class, static fn (Container $c) => new PdoProductVersionRepository($conn($c)));

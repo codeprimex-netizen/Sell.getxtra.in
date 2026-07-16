@@ -48,9 +48,17 @@ final class Config
                 'password' => Env::get('REDIS_PASSWORD', null),
             ],
             'session' => [
-                'driver'   => Env::get('SESSION_DRIVER', 'file'),
+                'driver'   => Env::get('SESSION_DRIVER', 'file'),  // file | cache (Redis-backed, stateless)
                 'lifetime' => (int) Env::get('SESSION_LIFETIME', 120),
                 'secure'   => (bool) Env::get('SESSION_SECURE_COOKIE', true),
+            ],
+            'cache' => [
+                'driver'  => Env::get('CACHE_DRIVER', 'file'),      // file | redis | array
+                'enabled' => (bool) Env::get('CACHE_ENABLED', true),
+                'prefix'  => Env::get('CACHE_PREFIX', 'gx:'),
+            ],
+            'assets' => [
+                'manifest' => Env::get('ASSET_MANIFEST', ''),        // path to build manifest.json
             ],
             'queue' => [
                 'driver' => Env::get('QUEUE_DRIVER', 'sync'),
