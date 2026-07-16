@@ -139,6 +139,21 @@ final class Request
         return $this->cookies[$name] ?? $default;
     }
 
+    /** Retrieve an uploaded file by input name, or null if not present. */
+    public function file(string $key): ?UploadedFile
+    {
+        $entry = $this->files[$key] ?? null;
+        if (!is_array($entry) || ($entry['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+        return UploadedFile::fromArray($entry);
+    }
+
+    public function hasFile(string $key): bool
+    {
+        return $this->file($key) !== null;
+    }
+
     public function withAttribute(string $key, mixed $value): self
     {
         $clone = clone $this;

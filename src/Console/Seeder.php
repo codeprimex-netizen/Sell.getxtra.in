@@ -56,6 +56,12 @@ final class Seeder
         'affiliate_program', 'social_login', 'multi_currency', 'public_api',
     ];
 
+    /** @var array<int, string> default top-level catalog categories */
+    private const CATEGORIES = [
+        'PHP Scripts', 'WordPress', 'HTML Templates', 'Mobile Apps',
+        'UI Kits & Themes', 'Plugins & Add-ons', 'Ebooks & Docs', 'Graphics',
+    ];
+
     public function __construct(private ConnectionManager $connection)
     {
     }
@@ -68,8 +74,28 @@ final class Seeder
         $this->seedPermissions($pdo);
         $this->assignRolePermissions($pdo);
         $this->seedFeatureFlags($pdo);
+        $this->seedCategories($pdo);
 
         fwrite(STDOUT, "Seeding complete.\n");
+    }
+
+    private function seedCategories(PDO $pdo): void
+    {
+        // Skip gracefully if the catalog migration hasn't run yet.
+        try {
+            $pdo->query('SELECT 1 FROM categories LIMIT 1');
+        } catch (\Throwable) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT IGNORE INTO categories (name, slug, sort_order) VALUES (:n, :s, :o)'
+        );
+        foreach (self::CATEGORIES as $i => $name) {
+            $slug = preg_replace('/[^a-z0-9]+/', '-', strtolower($name)) ?? '';
+            $stmt->execute(['n' => $name, 's' => trim($slug, '-'), 'o' => $i]);
+        }
+        fwrite(STDOUT, "  ✔ categories seeded\n");
     }
 
     private function seedRoles(PDO $pdo): void

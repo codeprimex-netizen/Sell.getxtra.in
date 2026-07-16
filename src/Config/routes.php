@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\Account\DashboardController;
 use App\Http\Controllers\Web\Account\SessionController;
+use App\Http\Controllers\Web\Admin\ModerationController;
 use App\Http\Controllers\Web\Auth\EmailVerificationController;
 use App\Http\Controllers\Web\Auth\LoginController;
 use App\Http\Controllers\Web\Auth\PasswordResetController;
 use App\Http\Controllers\Web\Auth\RegisterController;
 use App\Http\Controllers\Web\Auth\TwoFactorController;
+use App\Http\Controllers\Web\CatalogController;
 use App\Http\Controllers\Web\HealthController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\Seller\ProductController;
+use App\Http\Controllers\Web\Seller\ProductVersionController;
 use App\Http\Request;
 use App\Http\Response;
 use App\Http\Router;
@@ -59,6 +63,25 @@ return static function (Router $router): void {
     $router->get('/account/sessions', [SessionController::class, 'index'], ['auth']);
     $router->post('/account/sessions/revoke', [SessionController::class, 'revoke'], ['auth']);
     $router->post('/account/sessions/revoke-others', [SessionController::class, 'revokeOthers'], ['auth']);
+
+    // ── Public catalog (Req 4 / 6) ────────────────────────────────
+    $router->get('/products', [CatalogController::class, 'index']);
+    $router->get('/product/{slug}', [CatalogController::class, 'show']);
+
+    // ── Seller product management (Req 4 / 5) ─────────────────────
+    $router->get('/seller/products', [ProductController::class, 'index'], ['auth', 'can:product.create']);
+    $router->get('/seller/products/create', [ProductController::class, 'create'], ['auth', 'can:product.create']);
+    $router->post('/seller/products', [ProductController::class, 'store'], ['auth', 'can:product.create']);
+    $router->get('/seller/products/{id}/edit', [ProductController::class, 'edit'], ['auth', 'can:product.update']);
+    $router->put('/seller/products/{id}', [ProductController::class, 'update'], ['auth', 'can:product.update']);
+    $router->post('/seller/products/{id}/versions', [ProductVersionController::class, 'store'], ['auth', 'can:product.update']);
+    $router->post('/seller/products/{id}/submit', [ProductController::class, 'submit'], ['auth', 'can:product.update']);
+    $router->post('/seller/products/{id}/archive', [ProductController::class, 'archive'], ['auth', 'can:product.update']);
+
+    // ── Admin moderation (Req 12.1) ───────────────────────────────
+    $router->get('/admin/moderation', [ModerationController::class, 'queue'], ['auth', 'can:product.approve']);
+    $router->post('/admin/moderation/{id}/approve', [ModerationController::class, 'approve'], ['auth', 'can:product.approve']);
+    $router->post('/admin/moderation/{id}/reject', [ModerationController::class, 'reject'], ['auth', 'can:product.approve']);
 
     // ── API version banner (surface expands in Phase 10) ──────────
     $router->get('/api/v1/ping', static fn (Request $r): Response =>

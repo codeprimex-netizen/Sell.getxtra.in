@@ -33,6 +33,24 @@ use App\Infrastructure\Persistence\PdoLoginAttemptRepository;
 use App\Infrastructure\Persistence\PdoRoleRepository;
 use App\Infrastructure\Persistence\PdoSessionRepository;
 use App\Infrastructure\Persistence\PdoUserRepository;
+use App\Domain\Catalog\CategoryRepositoryInterface;
+use App\Domain\Catalog\LicenseTierRepositoryInterface;
+use App\Domain\Catalog\ProductFileRepositoryInterface;
+use App\Domain\Catalog\ProductRepositoryInterface;
+use App\Domain\Catalog\ProductVersionRepositoryInterface;
+use App\Domain\Catalog\TagRepositoryInterface;
+use App\Infrastructure\Persistence\PdoCategoryRepository;
+use App\Infrastructure\Persistence\PdoLicenseTierRepository;
+use App\Infrastructure\Persistence\PdoProductFileRepository;
+use App\Infrastructure\Persistence\PdoProductRepository;
+use App\Infrastructure\Persistence\PdoProductVersionRepository;
+use App\Infrastructure\Persistence\PdoTagRepository;
+use App\Infrastructure\Queue\QueueInterface;
+use App\Infrastructure\Queue\SyncQueue;
+use App\Infrastructure\Security\AntivirusScanner;
+use App\Infrastructure\Security\SignatureScanner;
+use App\Infrastructure\Storage\LocalStorage;
+use App\Infrastructure\Storage\StorageManager;
 
 /**
  * Application bootstrapper.
@@ -59,6 +77,7 @@ final class App
         $this->container = Container::getInstance();
         $this->registerCoreServices();
         $this->registerIdentityServices();
+        $this->registerCatalogServices();
         $this->registerHttp();
         $this->registerRoutes();
 
@@ -108,6 +127,47 @@ final class App
 
         $c->singleton(SessionRepositoryInterface::class, static fn (Container $c) =>
             new PdoSessionRepository($c->get(ConnectionManager::class)));
+    }
+
+    /**
+     * Bind catalog repositories, storage disks, the antivirus scanner, and
+     * the job queue. Catalog application services autowire from these.
+     */
+    private function registerCatalogServices(): void
+    {
+        $c = $this->container;
+        $basePath = $this->basePath;
+
+        $conn = static fn (Container $c): ConnectionManager => $c->get(ConnectionManager::class);
+
+        $c->singleton(ProductRepositoryInterface::class, static fn (Container $c) => new PdoProductRepository($conn($c)));
+        $c->singleton(CategoryRepositoryInterface::class, static fn (Container $c) => new PdoCategoryRepository($conn($c)));
+        $c->singleton(TagRepositoryInterface::class, static fn (Container $c) => new PdoTagRepository($conn($c)));
+        $c->singleton(LicenseTierRepositoryInterface::class, static fn (Container $c) => new PdoLicenseTierRepository($conn($c)));
+        $c->singleton(ProductVersionRepositoryInterface::class, static fn (Container $c) => new PdoProductVersionRepository($conn($c)));
+        $c->singleton(ProductFileRepositoryInterface::class, static fn (Container $c) => new PdoProductFileRepository($conn($c)));
+
+        // Storage disks: public media (CDN/web-served) + private deliverables.
+        $c->singleton(StorageManager::class, static function () use ($basePath): StorageManager {
+            $manager = new StorageManager();
+            $cdn = (string) Config::get('storage.cdn_url', '');
+            $manager->register('public', new LocalStorage(
+                root: $basePath . '/public/storage',
+                baseUrl: $cdn !== '' ? $cdn : '/storage',
+                public: true,
+            ));
+            $manager->register('private', new LocalStorage(
+                root: $basePath . '/storage/uploads/private',
+                baseUrl: '',
+                public: false,
+            ));
+            return $manager;
+        });
+
+        $c->singleton(AntivirusScanner::class, static fn (): AntivirusScanner => new SignatureScanner());
+
+        $c->singleton(QueueInterface::class, static fn (Container $c): QueueInterface =>
+            new SyncQueue($c->get(Logger::class)));
     }
 
     private function registerHttp(): void
